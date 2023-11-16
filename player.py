@@ -2,33 +2,45 @@ import os
 import pygame
 from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk
 from ttkthemes import ThemedTk
+import requests
+from io import BytesIO
+
 
 # Create the music player
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
         master.title("Music Player")
-        master.geometry("500x400")
+        master.geometry("500x600")
+        master.option_add("*Font", "SegoeUI 16")
+
+        # Set the default theme
+        self.style = ttk.Style()
+
+        self.style.theme_use('ubuntu')
 
         # Set the theme
-        available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux', 'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
-        selected_theme = 'elegance'
-        if selected_theme in available_themes:
-            master.set_theme(selected_theme)
+        available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
+                            'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
+        self.theme_var = ttk.Combobox(master, values=available_themes)
+        self.theme_var.set('keramik')  # default value
+        self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
+        self.theme_var.pack()
 
         self.song_library = []
         self.current_song_index = -1
         self.playing = False
 
-        self.label = Label(master, text="Music Player", font=("Helvetica", 16))
+        self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.pack(pady=10)
 
         self.song_listbox = Listbox(master, selectmode="SINGLE", width=40)
         self.song_listbox.pack(pady=10)
-# Add the songs to the library
+
+        # Add the songs to the library
         self.add_button = Button(
             master, text="Add to Library", command=self.add_to_library)
-        self.add_button.pack()
+        self.add_button.pack(pady=10)
 # Create the buttons
         button_frame = ttk.Frame(master)
         button_frame.pack()
@@ -77,8 +89,17 @@ class MusicPlayer:
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         self.update_progress_bar()
+# Change theme
+
+    def change_theme(self, event):
+        selected_theme = self.theme_var.get()
+        self.master.set_theme(selected_theme)
+
+
 # Add songs to the library
+
     def add_to_library(self):
+        # from local directory
         Tk().withdraw()
         directory_path = filedialog.askdirectory(title="Select Music Folder")
         for file_name in os.listdir(directory_path):
@@ -86,7 +107,18 @@ class MusicPlayer:
                 file_path = os.path.join(directory_path, file_name)
                 self.song_library.append(file_path)
                 self.song_listbox.insert("end", os.path.basename(file_path))
-# Play the music
+        # from url
+        # Get the song URL
+        song_url = filedialog.askopenfilename()
+
+        # Download the song data
+        response = requests.get(song_url)
+        song_data = BytesIO(response.content)
+
+        # Add the song data to the library
+        self.song_library.append(song_data)
+    # Play the music
+
     def play(self):
         if not self.playing and self.song_library:
             if self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
@@ -96,28 +128,33 @@ class MusicPlayer:
             self.playing = True
             self.update_progress_bar()
 # Pause the music
+
     def pause(self):
         if self.playing:
             pygame.mixer.music.pause()
             self.playing = False
 # Stop the music
+
     def stop(self):
         pygame.mixer.music.stop()
         self.playing = False
         self.progress_bar.stop()
 # Go to the next song
+
     def forward(self):
         self.stop()
         if self.current_song_index < len(self.song_library) - 1:
             self.current_song_index += 1
         self.play()
 # Go back to the previous song
+
     def backward(self):
         self.stop()
         if self.current_song_index > 0:
             self.current_song_index -= 1
         self.play()
 # Update the progress bar as the song plays
+
     def update_progress_bar(self):
         if 0 <= self.current_song_index < len(self.song_library):
             total_time = pygame.mixer.Sound(
@@ -132,6 +169,7 @@ class MusicPlayer:
 
             update()
 # Set the progress bar to the clicked position
+
     def set_progress_start(self, event):
         if self.playing:
             clicked_x = event.x
@@ -159,6 +197,7 @@ class MusicPlayer:
         self.stop()
         self.master.destroy()
         os._exit(0)
+
 
 # Run the program
 if __name__ == "__main__":
