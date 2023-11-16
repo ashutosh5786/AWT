@@ -28,7 +28,7 @@ class MusicPlayer:
         button_frame = ttk.Frame(master)
         button_frame.pack()
 
-        # Resize factor for the icons
+        # Resize factor fdor the icons
         resize_factor = 0.5
 
         self.play_icon = PhotoImage(file="play.png")
@@ -75,11 +75,12 @@ class MusicPlayer:
 
     def add_to_library(self):
         Tk().withdraw()
-        file_paths = filedialog.askopenfilenames(title="Select Audio Files", filetypes=[
-                                                 ("Audio Files", "*.mp3;*.wav")])
-        for file_path in file_paths:
-            self.song_library.append(file_path)
-            self.song_listbox.insert("end", os.path.basename(file_path))
+        directory_path = filedialog.askdirectory(title="Select Music Folder")
+        for file_name in os.listdir(directory_path):
+            if file_name.endswith('.mp3') or file_name.endswith('.wav'):
+                file_path = os.path.join(directory_path, file_name)
+                self.song_library.append(file_path)
+                self.song_listbox.insert("end", os.path.basename(file_path))
 
     def play(self):
         if not self.playing and self.song_library and self.current_song_index < len(self.song_library) - 1:
