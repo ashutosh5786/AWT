@@ -3,13 +3,18 @@ import pygame
 from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk
 from ttkthemes import ThemedTk
 
-
+# Create the music player
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
         master.title("Music Player")
         master.geometry("500x400")
-        master.set_theme("breeze")
+
+        # Set the theme
+        available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux', 'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
+        selected_theme = 'elegance'
+        if selected_theme in available_themes:
+            master.set_theme(selected_theme)
 
         self.song_library = []
         self.current_song_index = -1
@@ -20,17 +25,17 @@ class MusicPlayer:
 
         self.song_listbox = Listbox(master, selectmode="SINGLE", width=40)
         self.song_listbox.pack(pady=10)
-
+# Add the songs to the library
         self.add_button = Button(
             master, text="Add to Library", command=self.add_to_library)
         self.add_button.pack()
-
+# Create the buttons
         button_frame = ttk.Frame(master)
         button_frame.pack()
 
         # Resize factor fdor the icons
         resize_factor = 0.5
-
+# Load the icons
         self.play_icon = PhotoImage(file="play.png")
         self.play_icon = self.play_icon.subsample(int(resize_factor * 100))
         self.play_button = ttk.Button(
@@ -72,7 +77,7 @@ class MusicPlayer:
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         self.update_progress_bar()
-
+# Add songs to the library
     def add_to_library(self):
         Tk().withdraw()
         directory_path = filedialog.askdirectory(title="Select Music Folder")
@@ -81,37 +86,38 @@ class MusicPlayer:
                 file_path = os.path.join(directory_path, file_name)
                 self.song_library.append(file_path)
                 self.song_listbox.insert("end", os.path.basename(file_path))
-
+# Play the music
     def play(self):
-        if not self.playing and self.song_library and self.current_song_index < len(self.song_library) - 1:
-            self.current_song_index += 1
+        if not self.playing and self.song_library:
+            if self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
+                self.current_song_index += 1
             pygame.mixer.music.load(self.song_library[self.current_song_index])
             pygame.mixer.music.play()
             self.playing = True
             self.update_progress_bar()
-
+# Pause the music
     def pause(self):
         if self.playing:
             pygame.mixer.music.pause()
             self.playing = False
-
+# Stop the music
     def stop(self):
         pygame.mixer.music.stop()
         self.playing = False
         self.progress_bar.stop()
-
+# Go to the next song
     def forward(self):
         self.stop()
         if self.current_song_index < len(self.song_library) - 1:
             self.current_song_index += 1
         self.play()
-
+# Go back to the previous song
     def backward(self):
         self.stop()
         if self.current_song_index > 0:
             self.current_song_index -= 1
         self.play()
-
+# Update the progress bar as the song plays
     def update_progress_bar(self):
         if 0 <= self.current_song_index < len(self.song_library):
             total_time = pygame.mixer.Sound(
@@ -125,7 +131,7 @@ class MusicPlayer:
                     self.master.after(100, update)
 
             update()
-
+# Set the progress bar to the clicked position
     def set_progress_start(self, event):
         if self.playing:
             clicked_x = event.x
@@ -137,6 +143,7 @@ class MusicPlayer:
             pygame.mixer.music.set_pos(new_time / 1000)
             self.progress_bar["value"] = new_time
 
+# Update the progress bar as the user drags the mouse
     def set_progress_update(self, event):
         if self.playing:
             clicked_x = event.x
@@ -147,11 +154,13 @@ class MusicPlayer:
             # Set new position in seconds
             pygame.mixer.music.set_pos(new_time / 1000)
 
+# Stop the music and close the window
     def on_closing(self):
         self.stop()
         self.master.destroy()
+        os._exit(0)
 
-
+# Run the program
 if __name__ == "__main__":
     pygame.init()
     root = ThemedTk()
