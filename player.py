@@ -37,17 +37,34 @@ class MusicPlayer:
         self.song_listbox = Listbox(master, selectmode="SINGLE", width=40)
         self.song_listbox.pack(pady=10)
 
+        # Adding the URL box for the S3 and Google Drive
+        # self.url_box = ttk.Entry(master, width=40)
+        # self.url_box.pack(pady=10)
+
+        # Create the Entry widget
+        self.url_entry = ttk.Entry(master, width=40)
+
+        
+        # Place the Entry widget
+        self.url_entry.grid(row=0, column=0, padx=5, pady=5)
+
+        # Create the Button
+        self.add_url_button = Button(master, text="Add URL", command=self.add_url_library)
+
+        # Place the Button
+        self.add_url_button.grid(row=0, column=1, padx=5, pady=5)
+
         # Add the songs to the library
         self.add_button = Button(
             master, text="Add to Library", command=self.add_to_library)
         self.add_button.pack(pady=10)
-# Create the buttons
+        # Create the buttons
         button_frame = ttk.Frame(master)
         button_frame.pack()
 
         # Resize factor fdor the icons
         resize_factor = 0.5
-# Load the icons
+        # Load the icons
         self.play_icon = PhotoImage(file="play.png")
         self.play_icon = self.play_icon.subsample(int(resize_factor * 100))
         self.play_button = ttk.Button(
@@ -96,8 +113,20 @@ class MusicPlayer:
         self.master.set_theme(selected_theme)
 
 
-# Add songs to the library
+    # Add Songs from the URL
+    def add_url_library(self):
+        url = self.url_entry.get()
+        if url:
+            response = requests.get(url)
+            if response.status_code == 200:
+                song_data = BytesIO(response.content)
+                self.song_library.append(song_data)
+                self.song_listbox.insert("end", os.path.basename(url))
+                self.url_entry.delete(0, "end")
+            else:
+                print("Invalid URL")
 
+    # Add songs to the library
     def add_to_library(self):
         # from local directory
         Tk().withdraw()
@@ -107,23 +136,15 @@ class MusicPlayer:
                 file_path = os.path.join(directory_path, file_name)
                 self.song_library.append(file_path)
                 self.song_listbox.insert("end", os.path.basename(file_path))
-        # from url
-        # Get the song URL
-        song_url = filedialog.askopenfilename()
 
-        # Download the song data
-        response = requests.get(song_url)
-        song_data = BytesIO(response.content)
-
-        # Add the song data to the library
-        self.song_library.append(song_data)
     # Play the music
-
     def play(self):
         if not self.playing and self.song_library:
             if self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
                 self.current_song_index += 1
             pygame.mixer.music.load(self.song_library[self.current_song_index])
+            song_data = self.song_library[self.current_song_index]
+            pygame.mixer.music.load(song_data)        
             pygame.mixer.music.play()
             self.playing = True
             self.update_progress_bar()
@@ -206,3 +227,12 @@ if __name__ == "__main__":
     player = MusicPlayer(root)
     root.mainloop()
     pygame.quit()
+
+
+# @ TODO 1: Add the URL box for the S3 and Google Drive
+# @ TODO 2: The Songs Needs to be playable from the list by double clicking the song
+# @ TODO 3: Add the progress bar to the player
+# @ TODO 4: Add the volume control to the player
+# @ TODO 5: Add the song duration to the player
+# @ TODO 6: Add the song current time to the player
+# @ TODO 7: Add the song name to the player
