@@ -179,14 +179,18 @@ class MusicPlayer:
             if audio_file.tag.images:
                 image_data = audio_file.tag.images[0].image_data
                 img = Image.open(BytesIO(image_data))
-                img = img.resize((100, 100))
+                img = img.resize((350, 250))
                 self.album_art = ImageTk.PhotoImage(img)
                 self.album_art_label.configure(image=self.album_art)
             else:
-                self.album_art = PhotoImage(file="default_album_art.png")
+                img = Image.open("default_album_art.png")
+                img = img.resize((100, 100))
+                self.album_art = ImageTk.PhotoImage(img)
                 self.album_art_label.configure(image=self.album_art)
         else:
-            self.album_art = PhotoImage(file="default_album_art.png")
+            img = Image.open("default_album_art.png")
+            img = img.resize((100, 100))
+            self.album_art = ImageTk.PhotoImage(img)
             self.album_art_label.configure(image=self.album_art)
 
     # Playing Selected Song from the List
@@ -198,6 +202,7 @@ class MusicPlayer:
 
 
 # Stop the music
+
 
     def stop(self):
         pygame.mixer.music.stop()
