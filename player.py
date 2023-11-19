@@ -180,6 +180,7 @@ class MusicPlayer:
                 # Add the song to the playlist_listbox widget
                 self.playlist_listbox.insert(
                     "end", os.path.basename(file_path))
+                print(file_path)
                 # song_name = os.path.basename(file_path)
                 # song_names.append(song_name)
                 # print(self.song_library)
