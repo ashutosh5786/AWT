@@ -276,24 +276,24 @@ class MusicPlayer:
             self.song_paused = True
             self.play_button.grid()  # Show the play button
             self.pause_button.grid_remove()  # Hide the pause button
-# Go to the next song
-
+    
+    # Go to the next song
     def forward(self):
         self.stop()
         if self.current_song_index < len(self.song_library) - 1:
             self.current_song_index += 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
-# Go back to the previous song
-
+    
+    # Go back to the previous song
     def backward(self):
         self.stop()
         if self.current_song_index > 0:
             self.current_song_index -= 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
-# Update the progress bar as the song plays
-
+    
+    # Update the progress bar as the song plays
     def update_progress_bar(self):
         if 0 <= self.current_song_index < len(self.song_library):
             total_time = pygame.mixer.Sound(
@@ -307,8 +307,8 @@ class MusicPlayer:
                     self.master.after(100, update)
 
             update()
-# Set the progress bar to the clicked position
 
+    # Set the progress bar to the clicked position
     def set_progress_start(self, event):
         if self.playing:
             clicked_x = event.x
@@ -320,7 +320,7 @@ class MusicPlayer:
             pygame.mixer.music.set_pos(new_time / 1000)
             self.progress_bar["value"] = new_time
 
-# Update the progress bar as the user drags the mouse
+    # Update the progress bar as the user drags the mouse
     def set_progress_update(self, event):
         if self.playing:
             clicked_x = event.x
@@ -331,7 +331,7 @@ class MusicPlayer:
             # Set new position in seconds
             pygame.mixer.music.set_pos(new_time / 1000)
 
-# Stop the music and close the window
+    # Stop the music and close the window
     def on_closing(self):
         self.stop()
         self.master.destroy()
