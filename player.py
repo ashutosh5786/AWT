@@ -4,19 +4,19 @@ from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk
 from ttkthemes import ThemedTk
 import requests
 from io import BytesIO
-
+from PIL import Image, ImageTk
+import eyed3
 
 # Create the music player
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
         master.title("Music Player")
-        master.geometry("500x600")
+        master.geometry("600x600")
         master.option_add("*Font", "SegoeUI 16")
 
         # Set the default theme
         self.style = ttk.Style()
-
         self.style.theme_use('ubuntu')
 
         # Set the theme
@@ -27,6 +27,24 @@ class MusicPlayer:
         self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
         self.theme_var.grid(row=0, column=0, padx=10, pady=10)
 
+        # Load the default album art
+        # self.album_art_label = self.configure_album_art(
+        #     master, "default_album_art.png")
+        # self.album_art_label.grid(row=2, column=0, padx=10, pady=10)
+
+        # Playlist Configuration
+        self.playlist_listbox = Listbox(master, selectmode="MULTIPLE")
+        self.playlist_listbox.grid(row=2, column=1, padx=10, pady=10)
+
+        # # Create a Label widget to display song name of album art
+        # self.song_label = Label(master)
+        # self.song_label.grid(row=0, column=0, padx=10, pady=10)
+
+        # Create a Listbox widget to display the song list
+        # self.playlist_listbox = Listbox(master)
+        # self.playlist_listbox.grid(row=0, column=1, padx=10, pady=10)
+
+        # Library Configuration
         self.song_library = []
         self.current_song_index = -1
         self.playing = False
@@ -34,8 +52,20 @@ class MusicPlayer:
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
 
-        self.song_listbox = Listbox(master, selectmode="SINGLE", width=40)
-        self.song_listbox.grid(row=2, column=0, padx=10, pady=10)
+    # def configure_album_art(self, master, album_art_path):
+    #     album_art = Image.open(album_art_path)
+
+    #     # Resize the image
+    #     base_width = 100
+    #     w_percent = (base_width / float(album_art.size[0]))
+    #     h_size = int((float(album_art.size[1]) * float(w_percent)))
+    #     album_art = album_art.resize(
+    #         (base_width, h_size))
+
+    #     album_art = ImageTk.PhotoImage(album_art)
+    #     album_art_label = Label(master, image=album_art)
+    #     album_art_label.image = album_art  # Keep a reference to the image
+    #     return album_art_label
 
         # Adding the URL box for the S3 and Google Drive
         # self.url_box = ttk.Entry(master, width=40)
@@ -58,9 +88,10 @@ class MusicPlayer:
         self.add_button = Button(
             master, text="Add to Library", command=self.add_to_library)
         self.add_button.grid(row=3, column=0, pady=10)
+
         # Create the buttons
         button_frame = ttk.Frame(master)
-        button_frame.grid(row=10, column=0)
+        button_frame.grid(row=7, column=0)
 
         # Resize factor for the icons
         resize_factor = 0.5
@@ -109,7 +140,6 @@ class MusicPlayer:
         self.update_progress_bar()
 
     # Change theme
-
     def change_theme(self, event):
         selected_theme = self.theme_var.get()
         self.master.set_theme(selected_theme)
@@ -122,8 +152,10 @@ class MusicPlayer:
             if response.status_code == 200:
                 song_data = BytesIO(response.content)
                 self.song_library.append(song_data)
-                self.song_listbox.insert("end", os.path.basename(url))
+                # self.song_listbox.insert("end", os.path.basename(url))
                 self.url_entry.delete(0, "end")
+                # Add the song to the playlist_listbox widget
+                self.playlist_listbox.insert("end", os.path.basename(file_path))
             else:
                 print("Invalid URL")
 
@@ -132,17 +164,51 @@ class MusicPlayer:
         # from local directory
         Tk().withdraw()
         directory_path = filedialog.askdirectory(title="Select Music Folder")
+        song_names = []
         for file_name in os.listdir(directory_path):
             if file_name.endswith('.mp3') or file_name.endswith('.wav'):
                 file_path = os.path.join(directory_path, file_name)
                 self.song_library.append(file_path)
-                self.song_listbox.insert("end", os.path.basename(file_path))
+                # self.song_listbox.insert("end", os.path.basename(file_path))
+                # Add the song to the playlist_listbox widget
+                self.playlist_listbox.insert("end", os.path.basename(file_path))
+                song_name = os.path.basename(file_path)
+                song_names.append(song_name)
+        
+        if self.playlist_listbox.bind("<Double-Button-1>", self.play):
+            self.get_album_art(song_name)
+        return song_names
+
+
+    # Get the album art from the song
+    def get_album_art(self, song_path):
+        audio_file = eyed3.load(song_path)
+        if audio_file.tag:
+            if audio_file.tag.images:
+                image = Image.open(BytesIO(audio_file.tag.images[0].image_data))
+                # Resize the image
+                base_width = 100
+                w_percent = (base_width / float(image.size[0]))
+                h_size = int((float(image.size[1]) * float(w_percent)))
+                image = image.resize(
+                    (base_width, h_size))
+                album_art = ImageTk.PhotoImage(image)
+                return album_art
+        return None
+
 
     # Play the music
-    def play(self):
+    def play(self, song_names=None, event=None):
         if not self.playing and self.song_library:
-            if self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
+            if event:
+                # Get the selected song from the playlist_listbox widget
+                selected_song = self.playlist_listbox.get(self.playlist_listbox.curselection())
+                # Find the index of the selected song in the song_library
+                self.current_song_index = self.song_library.index(selected_song)
+            elif self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
                 self.current_song_index += 1
+            # song_name = song_names[self.current_song_index]
+            # album_art = self.song_library[self.current_song_index].album_art
             pygame.mixer.music.load(self.song_library[self.current_song_index])
             song_data = self.song_library[self.current_song_index]
             pygame.mixer.music.load(song_data)
