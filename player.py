@@ -25,44 +25,44 @@ class MusicPlayer:
         self.theme_var = ttk.Combobox(master, values=available_themes)
         self.theme_var.set('keramik')  # default value
         self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
-        self.theme_var.pack()
+        self.theme_var.grid(row=0, column=0, padx=10, pady=10)
 
         self.song_library = []
         self.current_song_index = -1
         self.playing = False
 
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
-        self.label.pack(pady=10)
+        self.label.grid(row=1, column=0, padx=10, pady=10)
 
         self.song_listbox = Listbox(master, selectmode="SINGLE", width=40)
-        self.song_listbox.pack(pady=10)
+        self.song_listbox.grid(row=2, column=0, padx=10, pady=10)
 
         # Adding the URL box for the S3 and Google Drive
         # self.url_box = ttk.Entry(master, width=40)
         # self.url_box.pack(pady=10)
 
         # Create the Entry widget
-        self.url_entry = ttk.Entry(master, width=40)
+        # self.url_entry = ttk.Entry(master, width=40)
 
-        
-        # Place the Entry widget
-        self.url_entry.grid(row=0, column=0, padx=5, pady=5)
+        # # Place the Entry widget
+        # self.url_entry.grid(row=0, column=0, padx=5, pady=5)
 
-        # Create the Button
-        self.add_url_button = Button(master, text="Add URL", command=self.add_url_library)
+        # # Create the Button
+        # self.add_url_button = Button(
+        #     master, text="Add URL", command=self.add_url_library)
 
-        # Place the Button
-        self.add_url_button.grid(row=0, column=1, padx=5, pady=5)
+        # # Place the Button
+        # self.add_url_button.grid(row=1, column=1, padx=5, pady=5)
 
         # Add the songs to the library
         self.add_button = Button(
             master, text="Add to Library", command=self.add_to_library)
-        self.add_button.pack(pady=10)
+        self.add_button.grid(row=3, column=0, pady=10)
         # Create the buttons
         button_frame = ttk.Frame(master)
-        button_frame.pack()
+        button_frame.grid(row=10, column=0)
 
-        # Resize factor fdor the icons
+        # Resize factor for the icons
         resize_factor = 0.5
         # Load the icons
         self.play_icon = PhotoImage(file="play.png")
@@ -97,21 +97,22 @@ class MusicPlayer:
             button_frame, image=self.backward_icon, command=self.backward)
         self.backward_button.grid(row=0, column=4, padx=5)
 
+        # Create the progress bar
         self.progress_bar = ttk.Progressbar(
             master, orient="horizontal", length=400, mode="determinate")
-        self.progress_bar.pack(pady=10)
+        self.progress_bar.grid(row=4, column=0, pady=10)
         self.progress_bar.bind("<Button-1>", self.set_progress_start)
         self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         self.update_progress_bar()
-# Change theme
+
+    # Change theme
 
     def change_theme(self, event):
         selected_theme = self.theme_var.get()
         self.master.set_theme(selected_theme)
-
 
     # Add Songs from the URL
     def add_url_library(self):
@@ -144,7 +145,7 @@ class MusicPlayer:
                 self.current_song_index += 1
             pygame.mixer.music.load(self.song_library[self.current_song_index])
             song_data = self.song_library[self.current_song_index]
-            pygame.mixer.music.load(song_data)        
+            pygame.mixer.music.load(song_data)
             pygame.mixer.music.play()
             self.playing = True
             self.update_progress_bar()
