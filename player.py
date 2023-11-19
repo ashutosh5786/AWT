@@ -10,16 +10,16 @@ import eyed3
 # Create the music player
 
 
-# Global Variables
-# song_names = []
-
 
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
         master.title("Music Player")
-        master.geometry("700x600")
+        master.geometry("800x600")
         master.option_add("*Font", "SegoeUI 16")
+
+        self.song_paused = False
+
 
         # Set the default theme
         self.style = ttk.Style()
@@ -48,16 +48,15 @@ class MusicPlayer:
 
         # Library Configuration
         self.song_library = []
-        self.current_song_index = 0 # This needs to be "None" need to fix this its connected to progress bar
+        # This needs to be "None" need to fix this its connected to progress bar
+        self.current_song_index = 0
         self.playing = False
-        
+
         # Playlist Configuration
         self.playlist_listbox = Listbox(master, selectmode="MULTIPLE")
         self.playlist_listbox.grid(row=2, column=1, padx=10, pady=10)
-        self.playlist_listbox.bind('<<ListboxSelect>>', self.play_selected_song)
-
-
-
+        self.playlist_listbox.bind(
+            '<<ListboxSelect>>', self.play_selected_song)
 
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
@@ -110,7 +109,7 @@ class MusicPlayer:
         self.play_icon = self.play_icon.subsample(int(resize_factor * 100))
         self.play_button = ttk.Button(
             button_frame, image=self.play_icon, command=self.play)
-        self.play_button.grid(row=0, column=0, padx=5)
+        self.play_button.grid(row=0, column=2, padx=5)
 
         self.pause_icon = PhotoImage(file="pause.png")
         self.pause_icon = self.pause_icon.subsample(int(resize_factor * 100))
@@ -122,32 +121,31 @@ class MusicPlayer:
         self.stop_icon = self.stop_icon.subsample(int(resize_factor * 100))
         self.stop_button = ttk.Button(
             button_frame, image=self.stop_icon, command=self.stop)
-        self.stop_button.grid(row=0, column=2, padx=5)
+        self.stop_button.grid(row=0, column=3, padx=5)
 
         self.forward_icon = PhotoImage(file="forward.png")
         self.forward_icon = self.forward_icon.subsample(
             int(resize_factor * 100))
         self.forward_button = ttk.Button(
             button_frame, image=self.forward_icon, command=self.forward)
-        self.forward_button.grid(row=0, column=3, padx=5)
+        self.forward_button.grid(row=0, column=4, padx=5)
 
         self.backward_icon = PhotoImage(file="backward.png")
         self.backward_icon = self.backward_icon.subsample(
             int(resize_factor * 100))
         self.backward_button = ttk.Button(
             button_frame, image=self.backward_icon, command=self.backward)
-        self.backward_button.grid(row=0, column=4, padx=5)
+        self.backward_button.grid(row=0, column=0, padx=5)
 
         # Create the progress bar
         self.progress_bar = ttk.Progressbar(
             master, orient="horizontal", length=400, mode="determinate")
-        self.progress_bar.grid(row=4, column=0, pady=10)
+        self.progress_bar.grid(row=4, column=0, pady=10, padx=50)
         self.progress_bar.bind("<Button-1>", self.set_progress_start)
         self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
+        self.update_progress_bar()
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        self.update_progress_bar()
 
     # Change theme
     def change_theme(self, event):
@@ -194,7 +192,8 @@ class MusicPlayer:
     # Need to call this function before playing the songs with current index of that song
     def get_album_art(self):
         audio_file = eyed3.load(self.song_library[self.current_song_index])
-        print ("This from the get_album_art function: "+self.song_library[self.current_song_index])
+        print("This from the get_album_art function: " +
+              self.song_library[self.current_song_index])
 
         if audio_file.tag:
             if audio_file.tag.images:
@@ -207,8 +206,9 @@ class MusicPlayer:
                 image = image.resize(
                     (base_width, h_size))
                 album_art = ImageTk.PhotoImage(image)
-                return print ("Album art found ") # Need to return the album art and display it in middle of the player
-        return print ("No Album Art")
+                # Need to return the album art and display it in middle of the player
+                return print("Album art found ")
+        return print("No Album Art")
 
     # Playing Selected Song from the List
     def play_selected_song(self, event):
@@ -217,19 +217,6 @@ class MusicPlayer:
         song_data = self.song_library[self.current_song_index]
 
         self.play(song_data)
-        # selected_song = self.playlist_listbox.get(
-        #     self.playlist_listbox.curselection())
-        # selected_song_index = self.song_library.index(selected_song)
-        # self.current_song_index = selected_song_index
-                # Stop any currently playing song
-        # pygame.mixer.music.stop()
-        
-        # # Load and play the selected song
-        # print(song_data)
-        # pygame.mixer.music.load(song_data)
-        # pygame.mixer.music.play()
-
-# NEed to implement this function to play the song from the list
 
 
 # Stop the music
@@ -240,12 +227,23 @@ class MusicPlayer:
 
     # Play the music
 
-    def play(self, song_data):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
+    def play(self, song_data=None):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
+        if  self.song_paused:
+            pygame.mixer.music.unpause()
+            self.song_paused = False
+            # self.update_progress_bar()
+            self.playing = True
 
-        self.stop()
+        else:
+            self.stop()
+            song_data = self.song_library[self.current_song_index]
+            pygame.mixer.music.load(song_data)
+            pygame.mixer.music.play()
+            self.playing = True
+            self.update_progress_bar()
         # # if not self.playing and self.song_library: COMMENTED OUT as the songs are not playable once they start playing from the list only able to control them from buttons not from the list
         # if event:
-        #     
+        #
         #     # Get the selected song from the playlist_listbox widget
         #     # selected_song = ERROR HERE
         #     # Find the index of the selected song in the song_library
@@ -264,31 +262,30 @@ class MusicPlayer:
         # song_name = song_names[self.current_song_index]
         # album_art = self.song_library[self.current_song_index].album_art
         # pygame.mixer.music.load(self.song_library[self.current_song_index])
-        song_data = self.song_library[self.current_song_index]
-        pygame.mixer.music.load(song_data)
-        pygame.mixer.music.play()
-        self.playing = True
-        self.update_progress_bar()
+        
 # Pause the music
 
     def pause(self):
         if self.playing:
             pygame.mixer.music.pause()
             self.playing = False
+            self.song_paused = True
 # Go to the next song
 
     def forward(self):
         self.stop()
         if self.current_song_index < len(self.song_library) - 1:
             self.current_song_index += 1
-        self.play()
+            song_data = self.song_library[self.current_song_index]
+            self.play(song_data)
 # Go back to the previous song
 
     def backward(self):
         self.stop()
         if self.current_song_index > 0:
             self.current_song_index -= 1
-        self.play()
+            song_data = self.song_library[self.current_song_index]
+            self.play(song_data)
 # Update the progress bar as the song plays
 
     def update_progress_bar(self):
