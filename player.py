@@ -32,17 +32,18 @@ class MusicPlayer:
         self.theme_var.grid(row=0, column=0, padx=10, pady=10)
 
         # Load the default album art
-        # self.album_art_label = self.configure_album_art(
-        #     master, "default_album_art.png")
-        # self.album_art_label.grid(row=2, column=0, padx=10, pady=10)
+        img = Image.open("default_album_art.png") 
+        img = img.resize((100, 100))
+        self.album_art = ImageTk.PhotoImage(img)
+
+        # self.album_art = PhotoImage(file="default_album_art.png")
+        self.album_art_label = ttk.Label(master, image=self.album_art)
+        self.album_art_label.grid(row=2, column=0, padx=0, pady=0)
 
         # # Create a Label widget to display song name of album art
         # self.song_label = Label(master)
         # self.song_label.grid(row=0, column=0, padx=10, pady=10)
 
-        # Create a Listbox widget to display the song list
-        # self.playlist_listbox = Listbox(master)
-        # self.playlist_listbox.grid(row=0, column=1, padx=10, pady=10)
 
         # Library Configuration
         self.song_library = []
@@ -117,11 +118,6 @@ class MusicPlayer:
         self.pause_button.grid(row=0, column=1, padx=5)
         self.pause_button.grid_remove()  # Hide the pause button by default
 
-        # self.stop_icon = PhotoImage(file="stop.png")
-        # self.stop_icon = self.stop_icon.subsample(int(resize_factor * 100))
-        # self.stop_button = ttk.Button(
-        #     button_frame, image=self.stop_icon, command=self.stop)
-        # self.stop_button.grid(row=0, column=3, padx=5)
 
         self.forward_icon = PhotoImage(file="forward.png")
         self.forward_icon = self.forward_icon.subsample(
@@ -190,18 +186,6 @@ class MusicPlayer:
         for song in self.song_library:
             self.playlist_listbox.insert("end", os.path.basename(song))
 
-                # self.song_library.append(file_path)
-                # # self.song_listbox.insert("end", os.path.basename(file_path))
-                # # Add the song to the playlist_listbox widget
-                # self.playlist_listbox.insert(
-                #     "end", os.path.basename(file_path))
-                # print(file_path)
-                # song_name = os.path.basename(file_path)
-                # song_names.append(song_name)
-                # print(self.song_library)
-
-        # if self.playlist_listbox.bind("<Double-Button-1>", self.play):
-        #     self.get_album_art(song_name)
 
     # Get the album art from the song
     # Need to call this function before playing the songs with current index of that song
@@ -260,20 +244,6 @@ class MusicPlayer:
             self.pause_button.grid()  # Show the pause button when playing the song
             self.playing = True
             self.update_progress_bar()
-        # # if not self.playing and self.song_library: COMMENTED OUT as the songs are not playable once they start playing from the list only able to control them from buttons not from the list
-        # if event:
-        #
-        #     # Get the selected song from the playlist_listbox widget
-        #     # selected_song = ERROR HERE
-        #     # Find the index of the selected song in the song_library
-        #     self.current_song_index = self.playlist_listbox.get(
-        #         self.playlist_listbox.curselection())
-
-        #     # self.song_library.index(selected_song) ERROR HERE
-
-        # elif not self.playing and self.song_library:
-        #     if self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
-        #         self.current_song_index += 1
 
         # # Calling the get_album_art function to get the album art
         # album_art = self.get_album_art()
@@ -363,6 +333,7 @@ if __name__ == "__main__":
 
 
 # @ TODO 1: Add the URL box for the S3 and Google Drive
+# @ TODO 2: Add the album art to the player
 # @ TODO 3: Add the progress bar to the player
 # @ TODO 4: Add the volume control to the player
 # @ TODO 5: Add the song duration to the player
