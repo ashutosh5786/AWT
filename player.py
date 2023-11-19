@@ -6,7 +6,7 @@ import requests
 from io import BytesIO
 from PIL import Image, ImageTk
 import eyed3
-
+import datetime
 # Create the music player
 
 
@@ -176,11 +176,15 @@ class MusicPlayer:
         for file_name in os.listdir(directory_path):
             if file_name.endswith('.mp3') or file_name.endswith('.wav'):
                 file_path = os.path.join(directory_path, file_name)
+
+                # created to sort the songs by date added
                 date_added = datetime.datetime.fromtimestamp(os.path.getctime(file_path))
                 self.song_details.append((file_path, date_added))
-
+        
+        # Sorting the songs by date added
         self.song_details.sort(key=lambda x: x[1], reverse=True)
         
+        # Removing the date added from the list and populating the song_library list
         self.song_library = [song[0] for song in self.song_details]
 
         for song in self.song_library:
