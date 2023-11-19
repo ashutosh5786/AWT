@@ -6,7 +6,7 @@ import requests
 from io import BytesIO
 from PIL import Image, ImageTk
 import eyed3
-
+import datetime
 # Create the music player
 
 
@@ -46,6 +46,7 @@ class MusicPlayer:
 
         # Library Configuration
         self.song_library = []
+        self.song_details = []
         # This needs to be "None" need to fix this its connected to progress bar
         self.current_song_index = 0
         self.playing = False
@@ -175,11 +176,26 @@ class MusicPlayer:
         for file_name in os.listdir(directory_path):
             if file_name.endswith('.mp3') or file_name.endswith('.wav'):
                 file_path = os.path.join(directory_path, file_name)
-                self.song_library.append(file_path)
-                # self.song_listbox.insert("end", os.path.basename(file_path))
-                # Add the song to the playlist_listbox widget
-                self.playlist_listbox.insert(
-                    "end", os.path.basename(file_path))
+
+                # created to sort the songs by date added
+                date_added = datetime.datetime.fromtimestamp(os.path.getctime(file_path))
+                self.song_details.append((file_path, date_added))
+        
+        # Sorting the songs by date added
+        self.song_details.sort(key=lambda x: x[1], reverse=True)
+        
+        # Removing the date added from the list and populating the song_library list
+        self.song_library = [song[0] for song in self.song_details]
+
+        for song in self.song_library:
+            self.playlist_listbox.insert("end", os.path.basename(song))
+
+                # self.song_library.append(file_path)
+                # # self.song_listbox.insert("end", os.path.basename(file_path))
+                # # Add the song to the playlist_listbox widget
+                # self.playlist_listbox.insert(
+                #     "end", os.path.basename(file_path))
+                # print(file_path)
                 # song_name = os.path.basename(file_path)
                 # song_names.append(song_name)
                 # print(self.song_library)
