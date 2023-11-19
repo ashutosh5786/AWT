@@ -24,12 +24,12 @@ class MusicPlayer:
         self.style.theme_use('ubuntu')
 
         # Set the theme
-        available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
-                            'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
-        self.theme_var = ttk.Combobox(master, values=available_themes)
-        self.theme_var.set('keramik')  # default value
-        self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
-        self.theme_var.grid(row=0, column=0, padx=10, pady=10)
+        # available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
+        #                     'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
+        # self.theme_var = ttk.Combobox(master, values=available_themes)
+        # self.theme_var.set('keramik')  # default value
+        # self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
+        # self.theme_var.grid(row=17, column=0, padx=10, pady=10)
 
         # Load the default album art
         img = Image.open("default_album_art.png")
