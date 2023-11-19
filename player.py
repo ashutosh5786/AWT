@@ -47,6 +47,7 @@ class MusicPlayer:
         # Library Configuration
         self.song_library = []
         self.song_details = []
+        self.current_album_art = None
         # This needs to be "None" need to fix this its connected to progress bar
         self.current_song_index = 0
         self.playing = False
@@ -199,6 +200,8 @@ class MusicPlayer:
         song_data = self.song_library[self.current_song_index]
 
         self.play(song_data)
+        self.get_album_art(song_data)
+
 
 
 # Stop the music
@@ -212,7 +215,6 @@ class MusicPlayer:
     # Play the music
 
     def play(self, song_data=None):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
-        self.get_album_art(song_data)
         if self.song_paused:
             pygame.mixer.music.unpause()
             self.song_paused = False
@@ -220,6 +222,7 @@ class MusicPlayer:
             self.play_button.grid_remove()  # Hide the play button when playing the song
             self.pause_button.grid()  # Show the pause button when playing the song
             self.playing = True
+
 
         else:
             self.stop()
@@ -255,6 +258,7 @@ class MusicPlayer:
             self.current_song_index += 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
+            self.get_album_art(song_data)
 
     # Go back to the previous song
     def backward(self):
@@ -263,6 +267,7 @@ class MusicPlayer:
             self.current_song_index -= 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
+            self.get_album_art(song_data)
 
     # Update the progress bar as the song plays
     def update_progress_bar(self):
@@ -289,7 +294,7 @@ class MusicPlayer:
             new_time = (clicked_x / total_width) * total_time
             # Set new position in seconds
             pygame.mixer.music.set_pos(new_time / 1000)
-            self.progress_bar["value"] = new_time
+            self.progress_bar["value"] = new_time / 1000
 
     # Update the progress bar as the user drags the mouse
     def set_progress_update(self, event):
@@ -324,3 +329,4 @@ if __name__ == "__main__":
 # @ TODO 5: Add the song duration to the player
 # @ TODO 6: Add the song current time to the player
 # @ TODO 7: Add the song name to the player
+
