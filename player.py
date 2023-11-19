@@ -10,7 +10,6 @@ import eyed3
 # Create the music player
 
 
-
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
@@ -19,7 +18,6 @@ class MusicPlayer:
         master.option_add("*Font", "SegoeUI 16")
 
         self.song_paused = False
-
 
         # Set the default theme
         self.style = ttk.Style()
@@ -116,12 +114,13 @@ class MusicPlayer:
         self.pause_button = ttk.Button(
             button_frame, image=self.pause_icon, command=self.pause)
         self.pause_button.grid(row=0, column=1, padx=5)
+        self.pause_button.grid_remove()  # Hide the pause button by default
 
-        self.stop_icon = PhotoImage(file="stop.png")
-        self.stop_icon = self.stop_icon.subsample(int(resize_factor * 100))
-        self.stop_button = ttk.Button(
-            button_frame, image=self.stop_icon, command=self.stop)
-        self.stop_button.grid(row=0, column=3, padx=5)
+        # self.stop_icon = PhotoImage(file="stop.png")
+        # self.stop_icon = self.stop_icon.subsample(int(resize_factor * 100))
+        # self.stop_button = ttk.Button(
+        #     button_frame, image=self.stop_icon, command=self.stop)
+        # self.stop_button.grid(row=0, column=3, padx=5)
 
         self.forward_icon = PhotoImage(file="forward.png")
         self.forward_icon = self.forward_icon.subsample(
@@ -220,6 +219,7 @@ class MusicPlayer:
 
 
 # Stop the music
+
     def stop(self):
         pygame.mixer.music.stop()
         self.playing = False
@@ -228,10 +228,12 @@ class MusicPlayer:
     # Play the music
 
     def play(self, song_data=None):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
-        if  self.song_paused:
+        if self.song_paused:
             pygame.mixer.music.unpause()
             self.song_paused = False
             # self.update_progress_bar()
+            self.play_button.grid_remove()  # Hide the play button when playing the song
+            self.pause_button.grid()  # Show the pause button when playing the song
             self.playing = True
 
         else:
@@ -239,6 +241,8 @@ class MusicPlayer:
             song_data = self.song_library[self.current_song_index]
             pygame.mixer.music.load(song_data)
             pygame.mixer.music.play()
+            self.play_button.grid_remove()  # Hide the play button when playing the song
+            self.pause_button.grid()  # Show the pause button when playing the song
             self.playing = True
             self.update_progress_bar()
         # # if not self.playing and self.song_library: COMMENTED OUT as the songs are not playable once they start playing from the list only able to control them from buttons not from the list
@@ -262,7 +266,7 @@ class MusicPlayer:
         # song_name = song_names[self.current_song_index]
         # album_art = self.song_library[self.current_song_index].album_art
         # pygame.mixer.music.load(self.song_library[self.current_song_index])
-        
+
 # Pause the music
 
     def pause(self):
@@ -270,6 +274,8 @@ class MusicPlayer:
             pygame.mixer.music.pause()
             self.playing = False
             self.song_paused = True
+            self.play_button.grid()  # Show the play button
+            self.pause_button.grid_remove()  # Hide the pause button
 # Go to the next song
 
     def forward(self):
