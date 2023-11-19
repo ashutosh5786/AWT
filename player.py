@@ -32,7 +32,7 @@ class MusicPlayer:
         self.theme_var.grid(row=0, column=0, padx=10, pady=10)
 
         # Load the default album art
-        img = Image.open("default_album_art.png") 
+        img = Image.open("default_album_art.png")
         img = img.resize((100, 100))
         self.album_art = ImageTk.PhotoImage(img)
 
@@ -43,7 +43,6 @@ class MusicPlayer:
         # # Create a Label widget to display song name of album art
         # self.song_label = Label(master)
         # self.song_label.grid(row=0, column=0, padx=10, pady=10)
-
 
         # Library Configuration
         self.song_library = []
@@ -60,21 +59,6 @@ class MusicPlayer:
 
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
-
-    # def configure_album_art(self, master, album_art_path):
-    #     album_art = Image.open(album_art_path)
-
-    #     # Resize the image
-    #     base_width = 100
-    #     w_percent = (base_width / float(album_art.size[0]))
-    #     h_size = int((float(album_art.size[1]) * float(w_percent)))
-    #     album_art = album_art.resize(
-    #         (base_width, h_size))
-
-    #     album_art = ImageTk.PhotoImage(album_art)
-    #     album_art_label = Label(master, image=album_art)
-    #     album_art_label.image = album_art  # Keep a reference to the image
-    #     return album_art_label
 
         # Adding the URL box for the S3 and Google Drive
         # self.url_box = ttk.Entry(master, width=40)
@@ -117,7 +101,6 @@ class MusicPlayer:
             button_frame, image=self.pause_icon, command=self.pause)
         self.pause_button.grid(row=0, column=1, padx=5)
         self.pause_button.grid_remove()  # Hide the pause button by default
-
 
         self.forward_icon = PhotoImage(file="forward.png")
         self.forward_icon = self.forward_icon.subsample(
@@ -174,40 +157,37 @@ class MusicPlayer:
                 file_path = os.path.join(directory_path, file_name)
 
                 # created to sort the songs by date added
-                date_added = datetime.datetime.fromtimestamp(os.path.getctime(file_path))
+                date_added = datetime.datetime.fromtimestamp(
+                    os.path.getctime(file_path))
                 self.song_details.append((file_path, date_added))
-        
+
         # Sorting the songs by date added
         self.song_details.sort(key=lambda x: x[1], reverse=True)
-        
+
         # Removing the date added from the list and populating the song_library list
         self.song_library = [song[0] for song in self.song_details]
 
         for song in self.song_library:
             self.playlist_listbox.insert("end", os.path.basename(song))
 
-
     # Get the album art from the song
     # Need to call this function before playing the songs with current index of that song
-    def get_album_art(self):
-        audio_file = eyed3.load(self.song_library[self.current_song_index])
-        print("This from the get_album_art function: " +
-              self.song_library[self.current_song_index])
 
+    def get_album_art(self, file_path):
+        audio_file = eyed3.load(file_path)
         if audio_file.tag:
             if audio_file.tag.images:
-                image = Image.open(
-                    BytesIO(audio_file.tag.images[0].image_data))
-                # Resize the image
-                base_width = 100
-                w_percent = (base_width / float(image.size[0]))
-                h_size = int((float(image.size[1]) * float(w_percent)))
-                image = image.resize(
-                    (base_width, h_size))
-                album_art = ImageTk.PhotoImage(image)
-                # Need to return the album art and display it in middle of the player
-                return print("Album art found ")
-        return print("No Album Art")
+                image_data = audio_file.tag.images[0].image_data
+                img = Image.open(BytesIO(image_data))
+                img = img.resize((100, 100))
+                self.album_art = ImageTk.PhotoImage(img)
+                self.album_art_label.configure(image=self.album_art)
+            else:
+                self.album_art = PhotoImage(file="default_album_art.png")
+                self.album_art_label.configure(image=self.album_art)
+        else:
+            self.album_art = PhotoImage(file="default_album_art.png")
+            self.album_art_label.configure(image=self.album_art)
 
     # Playing Selected Song from the List
     def play_selected_song(self, event):
@@ -227,6 +207,7 @@ class MusicPlayer:
     # Play the music
 
     def play(self, song_data=None):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
+        self.get_album_art(song_data)
         if self.song_paused:
             pygame.mixer.music.unpause()
             self.song_paused = False
@@ -261,7 +242,7 @@ class MusicPlayer:
             self.song_paused = True
             self.play_button.grid()  # Show the play button
             self.pause_button.grid_remove()  # Hide the pause button
-    
+
     # Go to the next song
     def forward(self):
         self.stop()
@@ -269,7 +250,7 @@ class MusicPlayer:
             self.current_song_index += 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
-    
+
     # Go back to the previous song
     def backward(self):
         self.stop()
@@ -277,7 +258,7 @@ class MusicPlayer:
             self.current_song_index -= 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
-    
+
     # Update the progress bar as the song plays
     def update_progress_bar(self):
         if 0 <= self.current_song_index < len(self.song_library):
