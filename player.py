@@ -94,8 +94,8 @@ class MusicPlayer:
 
         # Add the songs to the library
         self.add_button = Button(
-            master, text="Add to Library", command=self.add_to_library)
-        self.add_button.grid(row=3, column=0, pady=10)
+            master, text="Select Folder", command=self.add_to_library)
+        self.add_button.grid(row=3, column=1, pady=10)
 
         # Create the buttons
         button_frame = ttk.Frame(master)
@@ -228,7 +228,6 @@ class MusicPlayer:
     # Playing Selected Song from the List
     def play_selected_song(self, event):
         self.current_song_index = self.playlist_listbox.curselection()[0]
-        print(self.current_song_index)
         song_data = self.song_library[self.current_song_index]
 
         self.play(song_data)
@@ -364,7 +363,6 @@ if __name__ == "__main__":
 
 
 # @ TODO 1: Add the URL box for the S3 and Google Drive
-# @ TODO 2: The Songs Needs to be playable from the list by double clicking the song
 # @ TODO 3: Add the progress bar to the player
 # @ TODO 4: Add the volume control to the player
 # @ TODO 5: Add the song duration to the player
