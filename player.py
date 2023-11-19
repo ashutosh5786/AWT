@@ -319,7 +319,6 @@ if __name__ == "__main__":
 
 
 # @ TODO 1: Add the URL box for the S3 and Google Drive
-# @ TODO 2: Add the album art to the player
 # @ TODO 3: Add the progress bar to the player
 # @ TODO 4: Add the volume control to the player
 # @ TODO 5: Add the song duration to the player
