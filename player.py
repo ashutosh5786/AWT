@@ -8,11 +8,17 @@ from PIL import Image, ImageTk
 import eyed3
 
 # Create the music player
+
+
+# Global Variables
+# song_names = []
+
+
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
         master.title("Music Player")
-        master.geometry("600x600")
+        master.geometry("700x600")
         master.option_add("*Font", "SegoeUI 16")
 
         # Set the default theme
@@ -32,10 +38,6 @@ class MusicPlayer:
         #     master, "default_album_art.png")
         # self.album_art_label.grid(row=2, column=0, padx=10, pady=10)
 
-        # Playlist Configuration
-        self.playlist_listbox = Listbox(master, selectmode="MULTIPLE")
-        self.playlist_listbox.grid(row=2, column=1, padx=10, pady=10)
-
         # # Create a Label widget to display song name of album art
         # self.song_label = Label(master)
         # self.song_label.grid(row=0, column=0, padx=10, pady=10)
@@ -46,8 +48,16 @@ class MusicPlayer:
 
         # Library Configuration
         self.song_library = []
-        self.current_song_index = -1
+        self.current_song_index = 0 # This needs to be "None" need to fix this its connected to progress bar
         self.playing = False
+        
+        # Playlist Configuration
+        self.playlist_listbox = Listbox(master, selectmode="MULTIPLE")
+        self.playlist_listbox.grid(row=2, column=1, padx=10, pady=10)
+        self.playlist_listbox.bind('<<ListboxSelect>>', self.play_selected_song)
+
+
+
 
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
@@ -145,47 +155,51 @@ class MusicPlayer:
         self.master.set_theme(selected_theme)
 
     # Add Songs from the URL
-    def add_url_library(self):
-        url = self.url_entry.get()
-        if url:
-            response = requests.get(url)
-            if response.status_code == 200:
-                song_data = BytesIO(response.content)
-                self.song_library.append(song_data)
-                # self.song_listbox.insert("end", os.path.basename(url))
-                self.url_entry.delete(0, "end")
-                # Add the song to the playlist_listbox widget
-                self.playlist_listbox.insert("end", os.path.basename(file_path))
-            else:
-                print("Invalid URL")
+    # def add_url_library(self):
+    #     url = self.url_entry.get()
+    #     if url:
+    #         response = requests.get(url)
+    #         if response.status_code == 200:
+    #             song_data = BytesIO(response.content)
+    #             self.song_library.append(song_data)
+    #             # self.song_listbox.insert("end", os.path.basename(url))
+    #             self.url_entry.delete(0, "end")
+    #             # Add the song to the playlist_listbox widget
+    #             self.playlist_listbox.insert(
+    #                 "end", os.path.basename(file_path))
+    #         else:
+    #             print("Invalid URL")
 
     # Add songs to the library
     def add_to_library(self):
         # from local directory
         Tk().withdraw()
         directory_path = filedialog.askdirectory(title="Select Music Folder")
-        song_names = []
         for file_name in os.listdir(directory_path):
             if file_name.endswith('.mp3') or file_name.endswith('.wav'):
                 file_path = os.path.join(directory_path, file_name)
                 self.song_library.append(file_path)
                 # self.song_listbox.insert("end", os.path.basename(file_path))
                 # Add the song to the playlist_listbox widget
-                self.playlist_listbox.insert("end", os.path.basename(file_path))
-                song_name = os.path.basename(file_path)
-                song_names.append(song_name)
-        
-        if self.playlist_listbox.bind("<Double-Button-1>", self.play):
-            self.get_album_art(song_name)
-        return song_names
+                self.playlist_listbox.insert(
+                    "end", os.path.basename(file_path))
+                # song_name = os.path.basename(file_path)
+                # song_names.append(song_name)
+                # print(self.song_library)
 
+        # if self.playlist_listbox.bind("<Double-Button-1>", self.play):
+        #     self.get_album_art(song_name)
 
     # Get the album art from the song
-    def get_album_art(self, song_path):
-        audio_file = eyed3.load(song_path)
+    # Need to call this function before playing the songs with current index of that song
+    def get_album_art(self):
+        audio_file = eyed3.load(self.song_library[self.current_song_index])
+        print ("This from the get_album_art function: "+self.song_library[self.current_song_index])
+
         if audio_file.tag:
             if audio_file.tag.images:
-                image = Image.open(BytesIO(audio_file.tag.images[0].image_data))
+                image = Image.open(
+                    BytesIO(audio_file.tag.images[0].image_data))
                 # Resize the image
                 base_width = 100
                 w_percent = (base_width / float(image.size[0]))
@@ -193,40 +207,74 @@ class MusicPlayer:
                 image = image.resize(
                     (base_width, h_size))
                 album_art = ImageTk.PhotoImage(image)
-                return album_art
-        return None
+                return print ("Album art found ") # Need to return the album art and display it in middle of the player
+        return print ("No Album Art")
 
+    # Playing Selected Song from the List
+    def play_selected_song(self, event):
+        self.current_song_index = self.playlist_listbox.curselection()[0]
+        print(self.current_song_index)
+        song_data = self.song_library[self.current_song_index]
+
+        self.play(song_data)
+        # selected_song = self.playlist_listbox.get(
+        #     self.playlist_listbox.curselection())
+        # selected_song_index = self.song_library.index(selected_song)
+        # self.current_song_index = selected_song_index
+                # Stop any currently playing song
+        # pygame.mixer.music.stop()
+        
+        # # Load and play the selected song
+        # print(song_data)
+        # pygame.mixer.music.load(song_data)
+        # pygame.mixer.music.play()
+
+# NEed to implement this function to play the song from the list
+
+
+# Stop the music
+    def stop(self):
+        pygame.mixer.music.stop()
+        self.playing = False
+        self.progress_bar.stop()
 
     # Play the music
-    def play(self, song_names=None, event=None):
-        if not self.playing and self.song_library:
-            if event:
-                # Get the selected song from the playlist_listbox widget
-                selected_song = self.playlist_listbox.get(self.playlist_listbox.curselection())
-                # Find the index of the selected song in the song_library
-                self.current_song_index = self.song_library.index(selected_song)
-            elif self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
-                self.current_song_index += 1
-            # song_name = song_names[self.current_song_index]
-            # album_art = self.song_library[self.current_song_index].album_art
-            pygame.mixer.music.load(self.song_library[self.current_song_index])
-            song_data = self.song_library[self.current_song_index]
-            pygame.mixer.music.load(song_data)
-            pygame.mixer.music.play()
-            self.playing = True
-            self.update_progress_bar()
+
+    def play(self, song_data):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
+
+        self.stop()
+        # # if not self.playing and self.song_library: COMMENTED OUT as the songs are not playable once they start playing from the list only able to control them from buttons not from the list
+        # if event:
+        #     
+        #     # Get the selected song from the playlist_listbox widget
+        #     # selected_song = ERROR HERE
+        #     # Find the index of the selected song in the song_library
+        #     self.current_song_index = self.playlist_listbox.get(
+        #         self.playlist_listbox.curselection())
+
+        #     # self.song_library.index(selected_song) ERROR HERE
+
+        # elif not self.playing and self.song_library:
+        #     if self.current_song_index == -1 or pygame.mixer.music.get_busy() == 0:
+        #         self.current_song_index += 1
+
+        # # Calling the get_album_art function to get the album art
+        # album_art = self.get_album_art()
+
+        # song_name = song_names[self.current_song_index]
+        # album_art = self.song_library[self.current_song_index].album_art
+        # pygame.mixer.music.load(self.song_library[self.current_song_index])
+        song_data = self.song_library[self.current_song_index]
+        pygame.mixer.music.load(song_data)
+        pygame.mixer.music.play()
+        self.playing = True
+        self.update_progress_bar()
 # Pause the music
 
     def pause(self):
         if self.playing:
             pygame.mixer.music.pause()
             self.playing = False
-# Stop the music
-
-    def stop(self):
-        pygame.mixer.music.stop()
-        self.playing = False
-        self.progress_bar.stop()
 # Go to the next song
 
     def forward(self):
