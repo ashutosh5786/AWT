@@ -22,8 +22,8 @@ class MusicPlayer:
         self.user_set_time = None
         self.offset_time = 0
 
-        self.search_box = Entry(master, width=40)
-        self.search_box.grid(row=3, column=0, padx=5, pady=5)
+        self.search_box = Entry(master, width=20)
+        self.search_box.grid(row=1, column=1, padx=5, pady=5)
         self.search_box.bind("<KeyRelease>", self.search_song)
 
         # Add placeholder text to search box
