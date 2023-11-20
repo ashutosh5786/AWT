@@ -8,6 +8,7 @@ from PIL import Image, ImageTk
 import eyed3
 import datetime
 import threading
+from random import shuffle
 # Create the music player
 
 
@@ -29,7 +30,6 @@ class MusicPlayer:
         # Add placeholder text to search box
         self.placeholder = "Search Song"
         self.search_box.insert(0, self.placeholder)
-
 
         # Set the default theme
         self.style = ttk.Style()
@@ -63,6 +63,7 @@ class MusicPlayer:
         # This needs to be "None" need to fix this its connected to progress bar
         self.current_song_index = 0
         self.playing = False
+        self.repeat = False
 
         # Playlist Configuration
         self.playlist_listbox = Listbox(master, selectmode="MULTIPLE")
@@ -102,17 +103,34 @@ class MusicPlayer:
         # Resize factor for the icons
         resize_factor = 0.5
         # Load the icons
+
+        self.shuffle_icon = PhotoImage(file="shuffle.png")
+        self.shuffle_icon = self.shuffle_icon.subsample(
+            int(resize_factor * 100))
+        self.shuffle_button = ttk.Button(
+            button_frame, image=self.shuffle_icon, command=self.shuffle_songs)
+        self.shuffle_button.grid(row=0, column=0, padx=5)
+
+        self.repeat_icon = PhotoImage(file="repeat.png")
+        self.repeat_icon = self.repeat_icon.subsample(int(resize_factor * 60))
+        self.repeat_once_icon = PhotoImage(file="repeat_once.png")
+        self.repeat_once_icon = self.repeat_once_icon.subsample(
+            int(resize_factor * 60))
+        self.repeat_button = ttk.Button(
+            button_frame, image=self.repeat_icon, command=self.toggle_repeat)
+        self.repeat_button.grid(row=0, column=5, padx=5)
+
         self.play_icon = PhotoImage(file="play.png")
         self.play_icon = self.play_icon.subsample(int(resize_factor * 100))
         self.play_button = ttk.Button(
             button_frame, image=self.play_icon, command=self.play)
-        self.play_button.grid(row=0, column=2, padx=5)
+        self.play_button.grid(row=0, column=3, padx=5)
 
         self.pause_icon = PhotoImage(file="pause.png")
         self.pause_icon = self.pause_icon.subsample(int(resize_factor * 100))
         self.pause_button = ttk.Button(
             button_frame, image=self.pause_icon, command=self.pause)
-        self.pause_button.grid(row=0, column=1, padx=5)
+        self.pause_button.grid(row=0, column=2, padx=5)
         self.pause_button.grid_remove()  # Hide the pause button by default
 
         self.forward_icon = PhotoImage(file="forward.png")
@@ -127,7 +145,7 @@ class MusicPlayer:
             int(resize_factor * 100))
         self.backward_button = ttk.Button(
             button_frame, image=self.backward_icon, command=self.backward)
-        self.backward_button.grid(row=0, column=0, padx=5)
+        self.backward_button.grid(row=0, column=1, padx=5)
 
         # Create the progress bar
         self.progress_bar = ttk.Progressbar(
@@ -139,23 +157,34 @@ class MusicPlayer:
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
+    # Toggle repeat
+
+    def toggle_repeat(self):
+        if self.repeat:
+            self.repeat = False
+            self.repeat_button.configure(image=self.repeat_icon)
+        else:
+            self.repeat = True
+            self.repeat_button.configure(image=self.repeat_once_icon)
+
     # Search the song
     def search_song(self, event):
         search_term = self.search_box.get()
         if search_term:
-            matching_songs = [song for song in self.original_song_library if search_term.lower() in os.path.basename(song).lower()]
+            matching_songs = [song for song in self.original_song_library if search_term.lower(
+            ) in os.path.basename(song).lower()]
             self.song_library = matching_songs
         else:
             self.song_library = self.original_song_library.copy()
         self.playlist_listbox.delete(0, "end")
         for song in self.song_library:
             self.playlist_listbox.insert("end", os.path.basename(song))
-        self.current_song_index = 0   
+        self.current_song_index = 0
 
-## The Search is working here but after the search box is cleared the songs are not coming back to the original list
-
+# The Search is working here but after the search box is cleared the songs are not coming back to the original list
 
     # Change theme
+
     def change_theme(self, event):
         selected_theme = self.theme_var.get()
         self.master.set_theme(selected_theme)
@@ -195,7 +224,8 @@ class MusicPlayer:
 
         # Removing the date added from the list and populating the song_library list
         self.song_library = [song[0] for song in self.song_details]
-        self.original_song_library = self.song_library.copy() # Store the original song library for search box
+        # Store the original song library for search box
+        self.original_song_library = self.song_library.copy()
         for song in self.song_library:
             self.playlist_listbox.insert("end", os.path.basename(song))
 
@@ -233,7 +263,6 @@ class MusicPlayer:
 
 # Stop the music
 
-
     def stop(self):
         pygame.mixer.music.stop()
         self.playing = False
@@ -260,16 +289,18 @@ class MusicPlayer:
             self.pause_button.grid()  # Show the pause button when playing the song
             self.playing = True
             self.update_progress_bar()
+            pygame.mixer.music.set_endevent(pygame.USEREVENT)
+            threading.Thread(target=self.wait_for_song_end,
+                             args=(song_data,)).start()
 
-        # # Calling the get_album_art function to get the album art
-        # album_art = self.get_album_art()
-
-        # song_name = song_names[self.current_song_index]
-        # album_art = self.song_library[self.current_song_index].album_art
-        # pygame.mixer.music.load(self.song_library[self.current_song_index])
-
+    def wait_for_song_end(self, song_data):
+        self.offset_time = 0
+        while pygame.event.wait().type != pygame.USEREVENT:
+            pass
+        if self.repeat:
+            self.play(song_data)
+            
 # Pause the music
-
     def pause(self):
         if self.playing:
             pygame.mixer.music.pause()
@@ -347,6 +378,13 @@ class MusicPlayer:
     #         pygame.mixer.music.set_pos(new_time / 1000)
 
     # Stop the music and close the window
+
+    def shuffle_songs(self):
+        shuffle(self.song_library)
+        self.playlist_listbox.delete(0, "end")
+        for song in self.song_library:
+            self.playlist_listbox.insert("end", os.path.basename(song))
+        self.current_song_index = 0
 
     def on_closing(self):
         self.stop()
