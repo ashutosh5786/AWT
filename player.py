@@ -7,6 +7,7 @@ from io import BytesIO
 from PIL import Image, ImageTk
 import eyed3
 import datetime
+import threading
 # Create the music player
 
 
@@ -18,18 +19,20 @@ class MusicPlayer:
         master.option_add("*Font", "SegoeUI 16")
 
         self.song_paused = False
+        self.user_set_time = None
+        self.offset_time = 0
 
         # Set the default theme
         self.style = ttk.Style()
         self.style.theme_use('ubuntu')
 
         # Set the theme
-        available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
-                            'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
-        self.theme_var = ttk.Combobox(master, values=available_themes)
-        self.theme_var.set('keramik')  # default value
-        self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
-        self.theme_var.grid(row=0, column=0, padx=10, pady=10)
+        # available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
+        #                     'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
+        # self.theme_var = ttk.Combobox(master, values=available_themes)
+        # self.theme_var.set('keramik')  # default value
+        # self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
+        # self.theme_var.grid(row=17, column=0, padx=10, pady=10)
 
         # Load the default album art
         img = Image.open("default_album_art.png")
@@ -47,6 +50,7 @@ class MusicPlayer:
         # Library Configuration
         self.song_library = []
         self.song_details = []
+        self.current_album_art = None
         # This needs to be "None" need to fix this its connected to progress bar
         self.current_song_index = 0
         self.playing = False
@@ -121,7 +125,7 @@ class MusicPlayer:
             master, orient="horizontal", length=400, mode="determinate")
         self.progress_bar.grid(row=4, column=0, pady=10, padx=50)
         self.progress_bar.bind("<Button-1>", self.set_progress_start)
-        self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
+        # self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
         self.update_progress_bar()
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -199,10 +203,10 @@ class MusicPlayer:
         song_data = self.song_library[self.current_song_index]
 
         self.play(song_data)
+        self.get_album_art(song_data)
 
 
 # Stop the music
-
 
     def stop(self):
         pygame.mixer.music.stop()
@@ -212,7 +216,6 @@ class MusicPlayer:
     # Play the music
 
     def play(self, song_data=None):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
-        self.get_album_art(song_data)
         if self.song_paused:
             pygame.mixer.music.unpause()
             self.song_paused = False
@@ -255,6 +258,7 @@ class MusicPlayer:
             self.current_song_index += 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
+            self.get_album_art(song_data)
 
     # Go back to the previous song
     def backward(self):
@@ -263,6 +267,7 @@ class MusicPlayer:
             self.current_song_index -= 1
             song_data = self.song_library[self.current_song_index]
             self.play(song_data)
+            self.get_album_art(song_data)
 
     # Update the progress bar as the song plays
     def update_progress_bar(self):
@@ -273,9 +278,14 @@ class MusicPlayer:
 
             def update():
                 if self.playing:
-                    current_time = pygame.mixer.music.get_pos()
+                    if self.user_set_time is not None:
+                        # current_time = self.user_set_time + self.offset_time
+                        current_time = self.user_set_time
+                        self.user_set_time = None  # Reset the user_set_time
+                    else:
+                        current_time = (pygame.mixer.music.get_pos() + self.offset_time) # + self.offset_time
                     self.progress_bar["value"] = current_time
-                    self.master.after(100, update)
+                    threading.Timer(0.1, update).start()
 
             update()
 
@@ -286,23 +296,27 @@ class MusicPlayer:
             total_width = self.progress_bar.winfo_width()
             total_time = pygame.mixer.Sound(
                 self.song_library[self.current_song_index]).get_length() * 1000
-            new_time = (clicked_x / total_width) * total_time
-            # Set new position in seconds
+            new_time = (clicked_x / total_width) * total_time  # Set new position in seconds
+            # Dividing by 1000 to convert it into seconds
             pygame.mixer.music.set_pos(new_time / 1000)
-            self.progress_bar["value"] = new_time
+            self.user_set_time = new_time  # Dividing by 1000 to convert it into seconds
+            self.offset_time = new_time
+            self.progress_bar["value"] = self.user_set_time
+            print("this is new time: " + str(new_time / 1000))
 
-    # Update the progress bar as the user drags the mouse
-    def set_progress_update(self, event):
-        if self.playing:
-            clicked_x = event.x
-            total_width = self.progress_bar.winfo_width()
-            total_time = pygame.mixer.Sound(
-                self.song_library[self.current_song_index]).get_length() * 1000
-            new_time = (clicked_x / total_width) * total_time
-            # Set new position in seconds
-            pygame.mixer.music.set_pos(new_time / 1000)
+    # # Update the progress bar as the user drags the mouse
+    # def set_progress_update(self, event):
+    #     if self.playing:
+    #         clicked_x = event.x
+    #         total_width = self.progress_bar.winfo_width()
+    #         total_time = pygame.mixer.Sound(
+    #             self.song_library[self.current_song_index]).get_length() * 1000
+    #         new_time = (clicked_x / total_width) * total_time
+    #         # Set new position in seconds
+    #         pygame.mixer.music.set_pos(new_time / 1000)
 
     # Stop the music and close the window
+
     def on_closing(self):
         self.stop()
         self.master.destroy()
@@ -319,7 +333,6 @@ if __name__ == "__main__":
 
 
 # @ TODO 1: Add the URL box for the S3 and Google Drive
-# @ TODO 2: Add the album art to the player
 # @ TODO 3: Add the progress bar to the player
 # @ TODO 4: Add the volume control to the player
 # @ TODO 5: Add the song duration to the player
