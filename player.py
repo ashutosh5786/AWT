@@ -1,6 +1,6 @@
 import os
 import pygame
-from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk
+from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry
 from ttkthemes import ThemedTk
 import requests
 from io import BytesIO
@@ -21,6 +21,11 @@ class MusicPlayer:
         self.song_paused = False
         self.user_set_time = None
         self.offset_time = 0
+
+        self.search_box = Entry(master, width=40)
+        self.search_box.grid(row=3, column=0, padx=5, pady=5)
+        self.search_box.bind("<KeyRelease>", self.search_song)
+
 
         # Set the default theme
         self.style = ttk.Style()
@@ -64,6 +69,9 @@ class MusicPlayer:
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
 
+
+        # Store the original song library
+        self.original_song_library = self.song_library.copy()
         # Adding the URL box for the S3 and Google Drive
         # self.url_box = ttk.Entry(master, width=40)
         # self.url_box.pack(pady=10)
@@ -129,6 +137,21 @@ class MusicPlayer:
         self.update_progress_bar()
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    # Search the song
+    def search_song(self, event):
+        search_term = self.search_box.get()
+        if search_term:
+            matching_songs = [song for song in self.song_library if search_term.lower() in os.path.basename(song).lower()]
+            self.song_library = matching_songs
+        else:
+            self.song_library = self.original_song_library.copy()
+        self.playlist_listbox.delete(0, "end")
+        for song in self.song_library:
+            self.playlist_listbox.insert("end", os.path.basename(song))
+
+## The Search is working here but after the search box is cleared the songs are not coming back to the original list
+
 
     # Change theme
     def change_theme(self, event):
@@ -344,3 +367,4 @@ if __name__ == "__main__":
 # @ TODO 6: Add the song current time to the player
 # @ TODO 7: Add the song name to the player
 # @ TODO 8:Add shuffle and repeat button to the player
+# @ TODO 9: Add the Search Box
