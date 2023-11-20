@@ -201,12 +201,13 @@ class MusicPlayer:
     def play_selected_song(self, event):
         self.current_song_index = self.playlist_listbox.curselection()[0]
         song_data = self.song_library[self.current_song_index]
-
+        self.offset_time = 0
         self.play(song_data)
         self.get_album_art(song_data)
 
 
 # Stop the music
+
 
     def stop(self):
         pygame.mixer.music.stop()
@@ -223,6 +224,7 @@ class MusicPlayer:
             self.play_button.grid_remove()  # Hide the play button when playing the song
             self.pause_button.grid()  # Show the pause button when playing the song
             self.playing = True
+            self.update_progress_bar()
 
         else:
             self.stop()
@@ -249,11 +251,12 @@ class MusicPlayer:
             self.playing = False
             self.song_paused = True
             self.play_button.grid()  # Show the play button
-            self.pause_button.grid_remove()  # Hide the pause button
+            self.pause_button.grid_remove()
 
     # Go to the next song
     def forward(self):
         self.stop()
+        self.offset_time = 0
         if self.current_song_index < len(self.song_library) - 1:
             self.current_song_index += 1
             song_data = self.song_library[self.current_song_index]
@@ -263,6 +266,7 @@ class MusicPlayer:
     # Go back to the previous song
     def backward(self):
         self.stop()
+        self.offset_time = 0
         if self.current_song_index > 0:
             self.current_song_index -= 1
             song_data = self.song_library[self.current_song_index]
@@ -283,7 +287,8 @@ class MusicPlayer:
                         current_time = self.user_set_time
                         self.user_set_time = None  # Reset the user_set_time
                     else:
-                        current_time = (pygame.mixer.music.get_pos() + self.offset_time) # + self.offset_time
+                        current_time = (pygame.mixer.music.get_pos(
+                        ) + self.offset_time)  # + self.offset_time
                     self.progress_bar["value"] = current_time
                     threading.Timer(0.1, update).start()
 
@@ -296,7 +301,8 @@ class MusicPlayer:
             total_width = self.progress_bar.winfo_width()
             total_time = pygame.mixer.Sound(
                 self.song_library[self.current_song_index]).get_length() * 1000
-            new_time = (clicked_x / total_width) * total_time  # Set new position in seconds
+            new_time = (clicked_x / total_width) * \
+                total_time  # Set new position in seconds
             # Dividing by 1000 to convert it into seconds
             pygame.mixer.music.set_pos(new_time / 1000)
             self.user_set_time = new_time  # Dividing by 1000 to convert it into seconds
