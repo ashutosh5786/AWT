@@ -406,4 +406,4 @@ if __name__ == "__main__":
 # @ TODO 5: Add the song duration to the player
 # @ TODO 6: Add the song current time to the player
 # @ TODO 7: Add the song name to the player
-
+# @ TODO 8: Error handling
