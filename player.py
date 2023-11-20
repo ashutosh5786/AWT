@@ -69,9 +69,6 @@ class MusicPlayer:
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
 
-
-        # Store the original song library
-        self.original_song_library = self.song_library.copy()
         # Adding the URL box for the S3 and Google Drive
         # self.url_box = ttk.Entry(master, width=40)
         # self.url_box.pack(pady=10)
@@ -142,13 +139,14 @@ class MusicPlayer:
     def search_song(self, event):
         search_term = self.search_box.get()
         if search_term:
-            matching_songs = [song for song in self.song_library if search_term.lower() in os.path.basename(song).lower()]
+            matching_songs = [song for song in self.original_song_library if search_term.lower() in os.path.basename(song).lower()]
             self.song_library = matching_songs
         else:
             self.song_library = self.original_song_library.copy()
         self.playlist_listbox.delete(0, "end")
         for song in self.song_library:
             self.playlist_listbox.insert("end", os.path.basename(song))
+        self.current_song_index = 0   
 
 ## The Search is working here but after the search box is cleared the songs are not coming back to the original list
 
@@ -193,7 +191,7 @@ class MusicPlayer:
 
         # Removing the date added from the list and populating the song_library list
         self.song_library = [song[0] for song in self.song_details]
-
+        self.original_song_library = self.song_library.copy() # Store the original song library for search box
         for song in self.song_library:
             self.playlist_listbox.insert("end", os.path.basename(song))
 
