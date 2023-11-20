@@ -26,6 +26,10 @@ class MusicPlayer:
         self.search_box.grid(row=3, column=0, padx=5, pady=5)
         self.search_box.bind("<KeyRelease>", self.search_song)
 
+        # Add placeholder text to search box
+        self.placeholder = "Search Song"
+        self.search_box.insert(0, self.placeholder)
+
 
         # Set the default theme
         self.style = ttk.Style()
