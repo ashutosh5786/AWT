@@ -7,6 +7,7 @@ from io import BytesIO
 from PIL import Image, ImageTk
 import eyed3
 import datetime
+import threading
 # Create the music player
 
 
@@ -18,6 +19,8 @@ class MusicPlayer:
         master.option_add("*Font", "SegoeUI 16")
 
         self.song_paused = False
+        self.user_set_time = None
+        self.offset_time = 0
 
         # Set the default theme
         self.style = ttk.Style()
@@ -122,7 +125,7 @@ class MusicPlayer:
             master, orient="horizontal", length=400, mode="determinate")
         self.progress_bar.grid(row=4, column=0, pady=10, padx=50)
         self.progress_bar.bind("<Button-1>", self.set_progress_start)
-        self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
+        # self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
         self.update_progress_bar()
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -203,9 +206,7 @@ class MusicPlayer:
         self.get_album_art(song_data)
 
 
-
 # Stop the music
-
 
     def stop(self):
         pygame.mixer.music.stop()
@@ -222,7 +223,6 @@ class MusicPlayer:
             self.play_button.grid_remove()  # Hide the play button when playing the song
             self.pause_button.grid()  # Show the pause button when playing the song
             self.playing = True
-
 
         else:
             self.stop()
@@ -278,9 +278,14 @@ class MusicPlayer:
 
             def update():
                 if self.playing:
-                    current_time = pygame.mixer.music.get_pos()
+                    if self.user_set_time is not None:
+                        # current_time = self.user_set_time + self.offset_time
+                        current_time = self.user_set_time
+                        self.user_set_time = None  # Reset the user_set_time
+                    else:
+                        current_time = (pygame.mixer.music.get_pos() + self.offset_time) # + self.offset_time
                     self.progress_bar["value"] = current_time
-                    self.master.after(100, update)
+                    threading.Timer(0.1, update).start()
 
             update()
 
@@ -291,23 +296,27 @@ class MusicPlayer:
             total_width = self.progress_bar.winfo_width()
             total_time = pygame.mixer.Sound(
                 self.song_library[self.current_song_index]).get_length() * 1000
-            new_time = (clicked_x / total_width) * total_time
-            # Set new position in seconds
+            new_time = (clicked_x / total_width) * total_time  # Set new position in seconds
+            # Dividing by 1000 to convert it into seconds
             pygame.mixer.music.set_pos(new_time / 1000)
-            self.progress_bar["value"] = new_time / 1000
+            self.user_set_time = new_time  # Dividing by 1000 to convert it into seconds
+            self.offset_time = new_time
+            self.progress_bar["value"] = self.user_set_time
+            print("this is new time: " + str(new_time / 1000))
 
-    # Update the progress bar as the user drags the mouse
-    def set_progress_update(self, event):
-        if self.playing:
-            clicked_x = event.x
-            total_width = self.progress_bar.winfo_width()
-            total_time = pygame.mixer.Sound(
-                self.song_library[self.current_song_index]).get_length() * 1000
-            new_time = (clicked_x / total_width) * total_time
-            # Set new position in seconds
-            pygame.mixer.music.set_pos(new_time / 1000)
+    # # Update the progress bar as the user drags the mouse
+    # def set_progress_update(self, event):
+    #     if self.playing:
+    #         clicked_x = event.x
+    #         total_width = self.progress_bar.winfo_width()
+    #         total_time = pygame.mixer.Sound(
+    #             self.song_library[self.current_song_index]).get_length() * 1000
+    #         new_time = (clicked_x / total_width) * total_time
+    #         # Set new position in seconds
+    #         pygame.mixer.music.set_pos(new_time / 1000)
 
     # Stop the music and close the window
+
     def on_closing(self):
         self.stop()
         self.master.destroy()
@@ -329,4 +338,3 @@ if __name__ == "__main__":
 # @ TODO 5: Add the song duration to the player
 # @ TODO 6: Add the song current time to the player
 # @ TODO 7: Add the song name to the player
-
