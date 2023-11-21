@@ -147,10 +147,20 @@ class MusicPlayer:
             button_frame, image=self.backward_icon, command=self.backward)
         self.backward_button.grid(row=0, column=1, padx=5)
 
+        button_frame2 = ttk.Frame(master)
+        button_frame2.grid(row=4, column=0)
+
+        self.total_time_label = Label(button_frame2)
+        # This needs to be fixed and needs to be visible at the end of the progress bar
+        self.total_time_label.grid(row=0, column=2)
+
+        self.current_time_label = Label(button_frame2)
+        self.current_time_label.grid(row=0, column=0, padx=(10, 0))
+
         # Create the progress bar
         self.progress_bar = ttk.Progressbar(
-            master, orient="horizontal", length=400, mode="determinate")
-        self.progress_bar.grid(row=4, column=0, pady=10, padx=50)
+            button_frame2, orient="horizontal", length=400, mode="determinate")
+        self.progress_bar.grid(row=0, column=1, padx=10)
         self.progress_bar.bind("<Button-1>", self.set_progress_start)
         # self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
         self.update_progress_bar()
@@ -284,6 +294,11 @@ class MusicPlayer:
             self.stop()
             song_data = self.song_library[self.current_song_index]
             pygame.mixer.music.load(song_data)
+            song = pygame.mixer.Sound(song_data)
+            length = song.get_length()
+            minutes = int(length // 60)
+            seconds = int(length % 60)
+            self.total_time_label.configure(text=f"{minutes}:{seconds:02}")
             pygame.mixer.music.play()
             self.play_button.grid_remove()  # Hide the play button when playing the song
             self.pause_button.grid()  # Show the pause button when playing the song
@@ -299,7 +314,7 @@ class MusicPlayer:
             pass
         if self.repeat:
             self.play(song_data)
-            
+
 # Pause the music
     def pause(self):
         if self.playing:
@@ -345,6 +360,11 @@ class MusicPlayer:
                     else:
                         current_time = (pygame.mixer.music.get_pos(
                         ) + self.offset_time)  # + self.offset_time
+                    current_time_for_label = current_time / 1000
+                    minutes = int(current_time_for_label // 60)
+                    seconds = int(current_time_for_label % 60)
+                    self.current_time_label.configure(
+                        text=f"{minutes}:{seconds:02}")
                     self.progress_bar["value"] = current_time
                     threading.Timer(0.1, update).start()
 
