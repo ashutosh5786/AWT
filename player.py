@@ -9,59 +9,11 @@ import eyed3
 import datetime
 import threading
 from random import shuffle
+from urllib.parse import urlparse
+
 # Create the music player
 
 
-
-"""
-    A class representing a music player application.
-
-    Attributes:
-    - master: The master window of the application.
-    - song_paused: A boolean indicating whether the song is paused or not.
-    - user_set_time: The time set by the user for the song.
-    - offset_time: The offset time for the song.
-    - search_box: The search box widget for searching songs.
-    - placeholder: The placeholder text for the search box.
-    - style: The style object for setting the theme of the application.
-    - album_art: The album art image for the current song.
-    - album_art_label: The label widget for displaying the album art.
-    - song_name_label: The label widget for displaying the song name.
-    - song_library: The list of songs in the library.
-    - original_song_library: The original list of songs in the library.
-    - song_details: The details of the songs in the library.
-    - current_album_art: The current album art image.
-    - current_song_index: The index of the current song in the library.
-    - playing: A boolean indicating whether a song is currently playing or not.
-    - repeat: A boolean indicating whether the repeat mode is enabled or not.
-    - playlist_listbox: The listbox widget for displaying the playlist.
-    - label: The label widget for displaying the title of the application.
-    - add_button: The button widget for adding songs to the library.
-    - muted: A boolean indicating whether the volume is muted or not.
-    - volume: The volume level of the song.
-    - volume_scale: The scale widget for adjusting the volume level.
-    - volume_var: The variable for displaying the volume level.
-    - volume_label: The label widget for displaying the volume level.
-    - shuffle_icon: The icon image for the shuffle button.
-    - shuffle_button: The button widget for shuffling the songs.
-    - repeat_icon: The icon image for the repeat button.
-    - repeat_once_icon: The icon image for the repeat once button.
-    - repeat_button: The button widget for toggling the repeat mode.
-    - play_icon: The icon image for the play button.
-    - play_button: The button widget for playing the song.
-    - pause_icon: The icon image for the pause button.
-    - pause_button: The button widget for pausing the song.
-    - forward_icon: The icon image for the forward button.
-    - forward_button: The button widget for skipping to the next song.
-    - backward_icon: The icon image for the backward button.
-    - backward_button: The button widget for skipping to the previous song.
-    - total_time_label: The label widget for displaying the total time of the song.
-    - current_time_label: The label widget for displaying the current time of the song.
-    - mute_icon: The icon image for the mute button.
-    - unmute_icon: The icon image for the unmute button.
-    - mute_button: The button widget for toggling the mute mode.
-    - progress_bar: The progress bar widget for displaying the progress of the song.
-"""
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
@@ -111,16 +63,12 @@ class MusicPlayer:
         self.song_name_label.grid(row=3, column=0, padx=10, pady=10)
         self.song_name_label.grid_remove()  # Hide the song name label by default
 
-        # # Create a Label widget to display song name of album art
-        # self.song_label = Label(master)
-        # self.song_label.grid(row=0, column=0, padx=10, pady=10)
-
         # Library Configuration
         self.song_library = []
         self.original_song_library = []
         self.song_details = []
         self.current_album_art = None
-        # This needs to be "None" need to fix this its connected to progress bar
+        self.playlist_listbox = None
         self.current_song_index = 0
         self.playing = False
         self.repeat = False
@@ -136,25 +84,26 @@ class MusicPlayer:
 
         # Adding the URL box for the S3 and Google Drive
         # self.url_box = ttk.Entry(master, width=40)
-        # self.url_box.pack(pady=10)
+        # self.url_box.grid(row=0, column=0, padx=5, pady=5)
 
         # Create the Entry widget
-        # self.url_entry = ttk.Entry(master, width=40)
+        self.url_entry = ttk.Entry(master, width=40)
+        # Place the Entry widget
+        self.url_entry.grid(row=0, column=0, padx=5, pady=5)
+        # Bind the Return key to the Entry widget
+        self.url_entry.bind("<KeyRelease>", self.add_url_library)
 
-        # # Place the Entry widget
-        # self.url_entry.grid(row=0, column=0, padx=5, pady=5)
-
-        # # Create the Button
+        # Create the Button
         # self.add_url_button = Button(
-        #     master, text="Add URL", command=self.add_url_library)
+        #     master, text="Add URL") # , command=self.add_url_library
 
-        # # Place the Button
-        # self.add_url_button.grid(row=1, column=1, padx=5, pady=5)
+        # Place the Button
+        # self.add_url_button.grid(row=0, column=1, pady=5)
 
         # Add the songs to the library
-        self.add_button = Button(
-            master, text="Select Folder", command=self.add_to_library)
-        self.add_button.grid(row=3, column=1, pady=10)
+        # self.add_button = Button(
+        #     master, text="Select Folder", command=self.add_to_library)
+        # self.add_button.grid(row=3, column=1, pady=10)
 
         # Create the buttons
         button_frame = ttk.Frame(master)
@@ -247,7 +196,6 @@ class MusicPlayer:
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     # Volume slider working upon
-
     def set_volume(self, volume):
         pygame.mixer.init()
         self.volume = int(volume)
@@ -309,20 +257,22 @@ class MusicPlayer:
         self.master.set_theme(selected_theme)
 
     # Add Songs from the URL
-    # def add_url_library(self):
-    #     url = self.url_entry.get()
-    #     if url:
-    #         response = requests.get(url)
-    #         if response.status_code == 200:
-    #             song_data = BytesIO(response.content)
-    #             self.song_library.append(song_data)
-    #             # self.song_listbox.insert("end", os.path.basename(url))
-    #             self.url_entry.delete(0, "end")
-    #             # Add the song to the playlist_listbox widget
-    #             self.playlist_listbox.insert(
-    #                 "end", os.path.basename(file_path))
-    #         else:
-    #             print("Invalid URL")
+    def add_url_library(self, event=None):
+        url = self.url_entry.get()
+        if url:
+            response = requests.get(url)
+            if response.status_code == 200:
+                song_data = BytesIO(response.content)
+                self.song_library.append(song_data)
+                # self.song_listbox.insert("end", os.path.basename(url))
+                self.url_entry.delete(0, "end")
+                file_path = urlparse(url).path
+                basename = os.path.basename(file_path)
+                # Add the song to the playlist_listbox widget
+                self.playlist_listbox.insert(
+                    "end", basename)
+            else:
+                print("Invalid URL")
 
     # Add songs to the library
     def add_to_library(self):
