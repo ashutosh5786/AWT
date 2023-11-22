@@ -1,6 +1,6 @@
 import os
 import pygame
-from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry, Scale, StringVar
+from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry, Scale, StringVar, messagebox
 from ttkthemes import ThemedTk
 import requests
 from io import BytesIO
@@ -33,7 +33,12 @@ class MusicPlayer:
 
         # Set the default theme
         self.style = ttk.Style()
-        self.style.theme_use('ubuntu')
+        # Check if 'ubuntu' theme is available
+        if 'ubuntu' in self.style.theme_names():
+            self.style.theme_use('ubuntu')
+        else:
+            # Use 'default' theme if 'ubuntu' is not available
+            self.style.theme_use('default')
 
         # Set the theme
         # available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
@@ -58,6 +63,7 @@ class MusicPlayer:
 
         # Library Configuration
         self.song_library = []
+        self.original_song_library = []
         self.song_details = []
         self.current_album_art = None
         # This needs to be "None" need to fix this its connected to progress bar
@@ -188,8 +194,8 @@ class MusicPlayer:
 
     # Volume slider working upon
 
-
     def set_volume(self, volume):
+        pygame.mixer.init()
         self.volume = int(volume)
         pygame.mixer.music.set_volume(self.volume / 100)
         self.volume_var.set(f"{self.volume}%")
@@ -200,7 +206,8 @@ class MusicPlayer:
         else:
             self.mute_button.configure(image=self.unmute_icon)
             self.muted = False
-        self.volume_label.after(2000, self.volume_label.grid_remove) # Hide the volume label after 2 seconds
+        # Hide the volume label after 2 seconds
+        self.volume_label.after(2000, self.volume_label.grid_remove)
 
     def toggle_mute(self):
         if self.muted:
@@ -226,7 +233,11 @@ class MusicPlayer:
         if search_term:
             matching_songs = [song for song in self.original_song_library if search_term.lower(
             ) in os.path.basename(song).lower()]
-            self.song_library = matching_songs
+            if not matching_songs:
+                print(f"No songs found for search term '{search_term}'")
+                # messagebox.showinfo("No songs found", f"No songs found for search term '{search_term}'")
+            else:
+                self.song_library = matching_songs
         else:
             self.song_library = self.original_song_library.copy()
         self.playlist_listbox.delete(0, "end")
