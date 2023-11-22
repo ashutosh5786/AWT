@@ -12,6 +12,56 @@ from random import shuffle
 # Create the music player
 
 
+
+"""
+    A class representing a music player application.
+
+    Attributes:
+    - master: The master window of the application.
+    - song_paused: A boolean indicating whether the song is paused or not.
+    - user_set_time: The time set by the user for the song.
+    - offset_time: The offset time for the song.
+    - search_box: The search box widget for searching songs.
+    - placeholder: The placeholder text for the search box.
+    - style: The style object for setting the theme of the application.
+    - album_art: The album art image for the current song.
+    - album_art_label: The label widget for displaying the album art.
+    - song_name_label: The label widget for displaying the song name.
+    - song_library: The list of songs in the library.
+    - original_song_library: The original list of songs in the library.
+    - song_details: The details of the songs in the library.
+    - current_album_art: The current album art image.
+    - current_song_index: The index of the current song in the library.
+    - playing: A boolean indicating whether a song is currently playing or not.
+    - repeat: A boolean indicating whether the repeat mode is enabled or not.
+    - playlist_listbox: The listbox widget for displaying the playlist.
+    - label: The label widget for displaying the title of the application.
+    - add_button: The button widget for adding songs to the library.
+    - muted: A boolean indicating whether the volume is muted or not.
+    - volume: The volume level of the song.
+    - volume_scale: The scale widget for adjusting the volume level.
+    - volume_var: The variable for displaying the volume level.
+    - volume_label: The label widget for displaying the volume level.
+    - shuffle_icon: The icon image for the shuffle button.
+    - shuffle_button: The button widget for shuffling the songs.
+    - repeat_icon: The icon image for the repeat button.
+    - repeat_once_icon: The icon image for the repeat once button.
+    - repeat_button: The button widget for toggling the repeat mode.
+    - play_icon: The icon image for the play button.
+    - play_button: The button widget for playing the song.
+    - pause_icon: The icon image for the pause button.
+    - pause_button: The button widget for pausing the song.
+    - forward_icon: The icon image for the forward button.
+    - forward_button: The button widget for skipping to the next song.
+    - backward_icon: The icon image for the backward button.
+    - backward_button: The button widget for skipping to the previous song.
+    - total_time_label: The label widget for displaying the total time of the song.
+    - current_time_label: The label widget for displaying the current time of the song.
+    - mute_icon: The icon image for the mute button.
+    - unmute_icon: The icon image for the unmute button.
+    - mute_button: The button widget for toggling the mute mode.
+    - progress_bar: The progress bar widget for displaying the progress of the song.
+"""
 class MusicPlayer:
     def __init__(self, master):
         self.master = master
