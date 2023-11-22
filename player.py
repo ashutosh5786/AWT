@@ -10,6 +10,7 @@ import datetime
 import threading
 from random import shuffle
 from urllib.parse import urlparse
+import tempfile
 
 # Create the music player
 
@@ -35,20 +36,7 @@ class MusicPlayer:
 
         # Set the default theme
         self.style = ttk.Style()
-        # Check if 'ubuntu' theme is available
-        # if 'ubuntu' in self.style.theme_names():
         self.style.theme_use('ubuntu')
-        # else:
-        # Use 'default' theme if 'ubuntu' is not available
-        # self.style.theme_use('default')
-
-        # Set the theme
-        # available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
-        #                     'itft1', 'keramik', 'kroc', 'plastik', 'radiance', 'scidblue', 'smog', 'ubuntu', 'winxpblue', 'yaru']
-        # self.theme_var = ttk.Combobox(master, values=available_themes)
-        # self.theme_var.set('keramik')  # default value
-        # self.theme_var.bind('<<ComboboxSelected>>', self.change_theme)
-        # self.theme_var.grid(row=17, column=0, padx=10, pady=10)
 
         # Load the default album art
         img = Image.open("default_album_art.png")
@@ -82,28 +70,19 @@ class MusicPlayer:
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
 
-        # Adding the URL box for the S3 and Google Drive
-        # self.url_box = ttk.Entry(master, width=40)
-        # self.url_box.grid(row=0, column=0, padx=5, pady=5)
-
+        self.or_label = Label(master, text="or Stream it", font=("Segoe UI", 12))
+        self.or_label.grid(row=4, column=1, padx=10, pady=10)
         # Create the Entry widget
-        self.url_entry = ttk.Entry(master, width=40)
+        self.url_entry = ttk.Entry(master, width=20)
         # Place the Entry widget
-        self.url_entry.grid(row=0, column=0, padx=5, pady=5)
+        self.url_entry.grid(row=5, column=1, padx=5, pady=5)
         # Bind the Return key to the Entry widget
-        self.url_entry.bind("<KeyRelease>", self.add_url_library)
-
-        # Create the Button
-        # self.add_url_button = Button(
-        #     master, text="Add URL") # , command=self.add_url_library
-
-        # Place the Button
-        # self.add_url_button.grid(row=0, column=1, pady=5)
+        self.url_entry.bind("<Return>", self.add_url_library)
 
         # Add the songs to the library
-        # self.add_button = Button(
-        #     master, text="Select Folder", command=self.add_to_library)
-        # self.add_button.grid(row=3, column=1, pady=10)
+        self.add_button = Button(
+            master, text="Select Folder", command=self.add_to_library)
+        self.add_button.grid(row=3, column=1, pady=10)
 
         # Create the buttons
         button_frame = ttk.Frame(master)
@@ -258,21 +237,34 @@ class MusicPlayer:
 
     # Add Songs from the URL
     def add_url_library(self, event=None):
-        url = self.url_entry.get()
-        if url:
-            response = requests.get(url)
-            if response.status_code == 200:
-                song_data = BytesIO(response.content)
-                self.song_library.append(song_data)
-                # self.song_listbox.insert("end", os.path.basename(url))
-                self.url_entry.delete(0, "end")
-                file_path = urlparse(url).path
-                basename = os.path.basename(file_path)
-                # Add the song to the playlist_listbox widget
-                self.playlist_listbox.insert(
-                    "end", basename)
-            else:
-                print("Invalid URL")
+        try:
+            url = self.url_entry.get()
+            if url:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    file_path = urlparse(url).path
+                    basename = os.path.basename(file_path)
+                    
+                    temp_dir = tempfile.gettempdir()
+                    temp_file_path = os.path.join(temp_dir, basename)
+
+                    with open(temp_file_path, 'wb') as temp_file: #.NamedTemporaryFile(delete=False, suffix=basename) as temp_file:
+
+                        for chunk in response.iter_content(chunk_size=1024):
+                            if chunk:
+                                temp_file.write(chunk)
+                        temp_file.close()
+                    # Append the path of the temporary file to the song library
+                    self.song_library.append(temp_file_path)
+                    self.url_entry.delete(0, "end")
+
+
+                    self.playlist_listbox.insert(
+                        "end", basename)
+        except Exception as e:
+            messagebox.showerror("Invalid URL", "Please enter a valid URL")
+            print(e)
+
 
     # Add songs to the library
     def add_to_library(self):
@@ -443,7 +435,6 @@ class MusicPlayer:
             def update():
                 if self.playing:
                     if self.user_set_time is not None:
-                        # current_time = self.user_set_time + self.offset_time
                         current_time = self.user_set_time
                         self.user_set_time = None  # Reset the user_set_time
                     else:
@@ -475,18 +466,6 @@ class MusicPlayer:
             self.progress_bar["value"] = self.user_set_time
             print("this is new time: " + str(new_time / 1000))
 
-    # # Update the progress bar as the user drags the mouse
-    # def set_progress_update(self, event):
-    #     if self.playing:
-    #         clicked_x = event.x
-    #         total_width = self.progress_bar.winfo_width()
-    #         total_time = pygame.mixer.Sound(
-    #             self.song_library[self.current_song_index]).get_length() * 1000
-    #         new_time = (clicked_x / total_width) * total_time
-    #         # Set new position in seconds
-    #         pygame.mixer.music.set_pos(new_time / 1000)
-
-    # Stop the music and close the window
 
     def shuffle_songs(self):
         shuffle(self.song_library)
@@ -508,6 +487,3 @@ if __name__ == "__main__":
     player = MusicPlayer(root)
     root.mainloop()
     pygame.quit()
-
-
-# @ TODO 1: Add the URL box for the S3 and Google Drive
