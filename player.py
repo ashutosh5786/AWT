@@ -261,6 +261,7 @@ class MusicPlayer:
 
                     self.playlist_listbox.insert(
                         "end", basename)
+                    self.search_box.grid_remove()
         except Exception as e:
             messagebox.showerror("Invalid URL", "Please enter a valid URL")
             print(e)
@@ -271,6 +272,7 @@ class MusicPlayer:
         try:
             # from local directory
             Tk().withdraw()
+            self.search_box.grid()  # Show the search box
             directory_path = filedialog.askdirectory(
                 title="Select Music Folder")
             if directory_path == "":
