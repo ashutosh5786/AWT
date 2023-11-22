@@ -34,3 +34,5 @@ ENV/
 Lib/
 *.exe
 *.h
+
+bottle.py
