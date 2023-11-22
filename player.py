@@ -1,6 +1,6 @@
 import os
 import pygame
-from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry
+from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry, Scale, StringVar
 from ttkthemes import ThemedTk
 import requests
 from io import BytesIO
@@ -98,7 +98,18 @@ class MusicPlayer:
 
         # Create the buttons
         button_frame = ttk.Frame(master)
-        button_frame.grid(row=7, column=0)
+        button_frame.grid(row=7, column=0, padx=(50, 0))
+
+        self.muted = False
+        self.volume = 100
+        self.volume_scale = Scale(
+            button_frame, from_=0, to=100, orient="horizontal", command=self.set_volume, showvalue=False)
+        self.volume_scale.set(self.volume)
+        self.volume_scale.grid(row=0, column=7)
+        self.volume_var = StringVar(value='')
+        self.volume_label = Label(button_frame, textvariable=self.volume_var)
+        self.volume_label.grid(row=0, column=8)
+        self.volume_label.grid_remove()     # Hide the volume label by default
 
         # Resize factor for the icons
         resize_factor = 0.5
@@ -147,17 +158,59 @@ class MusicPlayer:
             button_frame, image=self.backward_icon, command=self.backward)
         self.backward_button.grid(row=0, column=1, padx=5)
 
+        button_frame2 = ttk.Frame(master)
+        button_frame2.grid(row=4, column=0)
+
+        self.total_time_label = Label(button_frame2)
+        # This needs to be fixed and needs to be visible at the end of the progress bar
+        self.total_time_label.grid(row=0, column=2)
+
+        self.current_time_label = Label(button_frame2)
+        self.current_time_label.grid(row=0, column=0, padx=(10, 0))
+
+        self.mute_icon = PhotoImage(file="mute.png")
+        self.mute_icon = self.mute_icon.subsample(int(resize_factor * 60))
+        self.unmute_icon = PhotoImage(file="unmute.png")
+        self.unmute_icon = self.unmute_icon.subsample(int(resize_factor * 60))
+        self.mute_button = Button(
+            button_frame, image=self.unmute_icon, command=self.toggle_mute)
+        self.mute_button.grid(row=0, column=6, padx=5)
+
         # Create the progress bar
         self.progress_bar = ttk.Progressbar(
-            master, orient="horizontal", length=400, mode="determinate")
-        self.progress_bar.grid(row=4, column=0, pady=10, padx=50)
+            button_frame2, orient="horizontal", length=400, mode="determinate")
+        self.progress_bar.grid(row=0, column=1, padx=10)
         self.progress_bar.bind("<Button-1>", self.set_progress_start)
         # self.progress_bar.bind("<B1-Motion>", self.set_progress_update)
         self.update_progress_bar()
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-    # Toggle repeat
+    # Volume slider working upon
+
+
+    def set_volume(self, volume):
+        self.volume = int(volume)
+        pygame.mixer.music.set_volume(self.volume / 100)
+        self.volume_var.set(f"{self.volume}%")
+        self.volume_label.grid()  # Show the volume label
+        if self.volume == 0:
+            self.mute_button.configure(image=self.mute_icon)
+            self.muted = True
+        else:
+            self.mute_button.configure(image=self.unmute_icon)
+            self.muted = False
+        self.volume_label.after(2000, self.volume_label.grid_remove) # Hide the volume label after 2 seconds
+
+    def toggle_mute(self):
+        if self.muted:
+            pygame.mixer.music.set_volume(self.volume / 100)
+            self.mute_button.configure(image=self.unmute_icon)
+            self.muted = False
+        else:
+            pygame.mixer.music.set_volume(0)
+            self.mute_button.configure(image=self.mute_icon)
+            self.muted = True
 
     def toggle_repeat(self):
         if self.repeat:
@@ -284,6 +337,11 @@ class MusicPlayer:
             self.stop()
             song_data = self.song_library[self.current_song_index]
             pygame.mixer.music.load(song_data)
+            song = pygame.mixer.Sound(song_data)
+            length = song.get_length()
+            minutes = int(length // 60)
+            seconds = int(length % 60)
+            self.total_time_label.configure(text=f"{minutes}:{seconds:02}")
             pygame.mixer.music.play()
             self.play_button.grid_remove()  # Hide the play button when playing the song
             self.pause_button.grid()  # Show the pause button when playing the song
@@ -299,7 +357,7 @@ class MusicPlayer:
             pass
         if self.repeat:
             self.play(song_data)
-            
+
 # Pause the music
     def pause(self):
         if self.playing:
@@ -345,6 +403,11 @@ class MusicPlayer:
                     else:
                         current_time = (pygame.mixer.music.get_pos(
                         ) + self.offset_time)  # + self.offset_time
+                    current_time_for_label = current_time / 1000
+                    minutes = int(current_time_for_label // 60)
+                    seconds = int(current_time_for_label % 60)
+                    self.current_time_label.configure(
+                        text=f"{minutes}:{seconds:02}")
                     self.progress_bar["value"] = current_time
                     threading.Timer(0.1, update).start()
 
@@ -402,8 +465,5 @@ if __name__ == "__main__":
 
 
 # @ TODO 1: Add the URL box for the S3 and Google Drive
-# @ TODO 4: Add the volume control to the player
-# @ TODO 5: Add the song duration to the player
-# @ TODO 6: Add the song current time to the player
 # @ TODO 7: Add the song name to the player
 # @ TODO 8: Error handling
