@@ -1,6 +1,6 @@
 import os
 import pygame
-from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry, Scale, StringVar
+from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry, Scale, StringVar, messagebox
 from ttkthemes import ThemedTk
 import requests
 from io import BytesIO
@@ -33,7 +33,12 @@ class MusicPlayer:
 
         # Set the default theme
         self.style = ttk.Style()
+        # Check if 'ubuntu' theme is available
+        # if 'ubuntu' in self.style.theme_names():
         self.style.theme_use('ubuntu')
+        # else:
+            # Use 'default' theme if 'ubuntu' is not available
+            # self.style.theme_use('default')
 
         # Set the theme
         # available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
@@ -58,6 +63,7 @@ class MusicPlayer:
 
         # Library Configuration
         self.song_library = []
+        self.original_song_library = []
         self.song_details = []
         self.current_album_art = None
         # This needs to be "None" need to fix this its connected to progress bar
@@ -188,8 +194,8 @@ class MusicPlayer:
 
     # Volume slider working upon
 
-
     def set_volume(self, volume):
+        pygame.mixer.init()
         self.volume = int(volume)
         pygame.mixer.music.set_volume(self.volume / 100)
         self.volume_var.set(f"{self.volume}%")
@@ -200,7 +206,8 @@ class MusicPlayer:
         else:
             self.mute_button.configure(image=self.unmute_icon)
             self.muted = False
-        self.volume_label.after(2000, self.volume_label.grid_remove) # Hide the volume label after 2 seconds
+        # Hide the volume label after 2 seconds
+        self.volume_label.after(2000, self.volume_label.grid_remove)
 
     def toggle_mute(self):
         if self.muted:
@@ -226,7 +233,11 @@ class MusicPlayer:
         if search_term:
             matching_songs = [song for song in self.original_song_library if search_term.lower(
             ) in os.path.basename(song).lower()]
-            self.song_library = matching_songs
+            if not matching_songs:
+                # print(f"No songs found for search term '{search_term}'")
+                messagebox.showinfo("No songs found", f"No songs found with the name '{search_term}'")
+            else:
+                self.song_library = matching_songs
         else:
             self.song_library = self.original_song_library.copy()
         self.playlist_listbox.delete(0, "end")
@@ -260,27 +271,33 @@ class MusicPlayer:
 
     # Add songs to the library
     def add_to_library(self):
-        # from local directory
-        Tk().withdraw()
-        directory_path = filedialog.askdirectory(title="Select Music Folder")
-        for file_name in os.listdir(directory_path):
-            if file_name.endswith('.mp3') or file_name.endswith('.wav'):
-                file_path = os.path.join(directory_path, file_name)
+        try:
+            # from local directory
+            Tk().withdraw()
+            directory_path = filedialog.askdirectory(title="Select Music Folder")
+            if directory_path == "":
+                raise ValueError("No folder selected")
+            for file_name in os.listdir(directory_path):
+                if file_name.endswith('.mp3') or file_name.endswith('.wav'):
+                    file_path = os.path.join(directory_path, file_name)
 
-                # created to sort the songs by date added
-                date_added = datetime.datetime.fromtimestamp(
-                    os.path.getctime(file_path))
-                self.song_details.append((file_path, date_added))
+                    # created to sort the songs by date added
+                    date_added = datetime.datetime.fromtimestamp(
+                        os.path.getctime(file_path))
+                    self.song_details.append((file_path, date_added))
 
-        # Sorting the songs by date added
-        self.song_details.sort(key=lambda x: x[1], reverse=True)
+            # Sorting the songs by date added
+            self.song_details.sort(key=lambda x: x[1], reverse=True)
 
-        # Removing the date added from the list and populating the song_library list
-        self.song_library = [song[0] for song in self.song_details]
-        # Store the original song library for search box
-        self.original_song_library = self.song_library.copy()
-        for song in self.song_library:
-            self.playlist_listbox.insert("end", os.path.basename(song))
+            # Removing the date added from the list and populating the song_library list
+            self.song_library = [song[0] for song in self.song_details]
+            # Store the original song library for search box
+            self.original_song_library = self.song_library.copy()
+            for song in self.song_library:
+                self.playlist_listbox.insert("end", os.path.basename(song))
+        except ValueError as e:
+            messagebox.showerror("No folder selected" , "Please select a folder to add songs")
+
 
     # Get the album art from the song
     # Need to call this function before playing the songs with current index of that song
@@ -307,11 +324,14 @@ class MusicPlayer:
 
     # Playing Selected Song from the List
     def play_selected_song(self, event):
-        self.current_song_index = self.playlist_listbox.curselection()[0]
-        song_data = self.song_library[self.current_song_index]
-        self.offset_time = 0
-        self.play(song_data)
-        self.get_album_art(song_data)
+        try:
+            self.current_song_index = self.playlist_listbox.curselection()[0]
+            song_data = self.song_library[self.current_song_index]
+            self.offset_time = 0
+            self.play(song_data)
+            self.get_album_art(song_data)
+        except IndexError:
+            messagebox.showerror("No song selected", "Please select a song to play")
 
 
 # Stop the music
@@ -324,32 +344,35 @@ class MusicPlayer:
     # Play the music
 
     def play(self, song_data=None):  # The play function is playing from the start of the list and we cant play from the list due to this as the play function is not taking any index value from where tho play from the list I think we need to add the index value or pass it in function
-        if self.song_paused:
-            pygame.mixer.music.unpause()
-            self.song_paused = False
-            # self.update_progress_bar()
-            self.play_button.grid_remove()  # Hide the play button when playing the song
-            self.pause_button.grid()  # Show the pause button when playing the song
-            self.playing = True
-            self.update_progress_bar()
+        try:
+            if self.song_paused:
+                pygame.mixer.music.unpause()
+                self.song_paused = False
+                # self.update_progress_bar()
+                self.play_button.grid_remove()  # Hide the play button when playing the song
+                self.pause_button.grid()  # Show the pause button when playing the song
+                self.playing = True
+                self.update_progress_bar()
 
-        else:
-            self.stop()
-            song_data = self.song_library[self.current_song_index]
-            pygame.mixer.music.load(song_data)
-            song = pygame.mixer.Sound(song_data)
-            length = song.get_length()
-            minutes = int(length // 60)
-            seconds = int(length % 60)
-            self.total_time_label.configure(text=f"{minutes}:{seconds:02}")
-            pygame.mixer.music.play()
-            self.play_button.grid_remove()  # Hide the play button when playing the song
-            self.pause_button.grid()  # Show the pause button when playing the song
-            self.playing = True
-            self.update_progress_bar()
-            pygame.mixer.music.set_endevent(pygame.USEREVENT)
-            threading.Thread(target=self.wait_for_song_end,
-                             args=(song_data,)).start()
+            else:
+                self.stop()
+                song_data = self.song_library[self.current_song_index]
+                pygame.mixer.music.load(song_data)
+                song = pygame.mixer.Sound(song_data)
+                length = song.get_length()
+                minutes = int(length // 60)
+                seconds = int(length % 60)
+                self.total_time_label.configure(text=f"{minutes}:{seconds:02}")
+                pygame.mixer.music.play()
+                self.play_button.grid_remove()  # Hide the play button when playing the song
+                self.pause_button.grid()  # Show the pause button when playing the song
+                self.playing = True
+                self.update_progress_bar()
+                pygame.mixer.music.set_endevent(pygame.USEREVENT)
+                threading.Thread(target=self.wait_for_song_end,
+                                args=(song_data,)).start()
+        except IndexError:
+            messagebox.showerror("No song selected", "Please select a song to play")
 
     def wait_for_song_end(self, song_data):
         self.offset_time = 0
@@ -369,23 +392,32 @@ class MusicPlayer:
 
     # Go to the next song
     def forward(self):
-        self.stop()
-        self.offset_time = 0
-        if self.current_song_index < len(self.song_library) - 1:
-            self.current_song_index += 1
-            song_data = self.song_library[self.current_song_index]
-            self.play(song_data)
-            self.get_album_art(song_data)
-
+        try:
+            self.stop()
+            self.offset_time = 0
+            if self.current_song_index < len(self.song_library) - 1:
+                self.current_song_index += 1
+                song_data = self.song_library[self.current_song_index]
+                self.play(song_data)
+                self.get_album_art(song_data)
+            else:
+                raise ValueError("No Song in Playlist")
+        except ValueError:
+            messagebox.showerror("No song selected", "No Song in Playlist")
     # Go back to the previous song
     def backward(self):
-        self.stop()
-        self.offset_time = 0
-        if self.current_song_index > 0:
-            self.current_song_index -= 1
-            song_data = self.song_library[self.current_song_index]
-            self.play(song_data)
-            self.get_album_art(song_data)
+        try:
+            self.stop()
+            self.offset_time = 0
+            if self.current_song_index > 0:
+                self.current_song_index -= 1
+                song_data = self.song_library[self.current_song_index]
+                self.play(song_data)
+                self.get_album_art(song_data)
+            else:
+                raise ValueError("No Song in Playlist")
+        except ValueError:
+            messagebox.showerror("No song selected", "No Song in Playlist")
 
     # Update the progress bar as the song plays
     def update_progress_bar(self):
@@ -464,6 +496,7 @@ if __name__ == "__main__":
     pygame.quit()
 
 
+
 # @ TODO 1: Add the URL box for the S3 and Google Drive
 # @ TODO 7: Add the song name to the player
-# @ TODO 8: Error handling
+
