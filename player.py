@@ -37,8 +37,8 @@ class MusicPlayer:
         # if 'ubuntu' in self.style.theme_names():
         self.style.theme_use('ubuntu')
         # else:
-            # Use 'default' theme if 'ubuntu' is not available
-            # self.style.theme_use('default')
+        # Use 'default' theme if 'ubuntu' is not available
+        # self.style.theme_use('default')
 
         # Set the theme
         # available_themes = ['aquativo', 'arc', 'black', 'blue', 'breeze', 'clearlooks', 'elegance', 'equilux',
@@ -56,6 +56,10 @@ class MusicPlayer:
         # self.album_art = PhotoImage(file="default_album_art.png")
         self.album_art_label = ttk.Label(master, image=self.album_art)
         self.album_art_label.grid(row=2, column=0, padx=0, pady=0)
+
+        self.song_name_label = Label(master, wraplength=250, justify="center")
+        self.song_name_label.grid(row=3, column=0, padx=10, pady=10)
+        self.song_name_label.grid_remove()  # Hide the song name label by default
 
         # # Create a Label widget to display song name of album art
         # self.song_label = Label(master)
@@ -235,7 +239,8 @@ class MusicPlayer:
             ) in os.path.basename(song).lower()]
             if not matching_songs:
                 # print(f"No songs found for search term '{search_term}'")
-                messagebox.showinfo("No songs found", f"No songs found with the name '{search_term}'")
+                messagebox.showinfo(
+                    "No songs found", f"No songs found with the name '{search_term}'")
             else:
                 self.song_library = matching_songs
         else:
@@ -274,7 +279,8 @@ class MusicPlayer:
         try:
             # from local directory
             Tk().withdraw()
-            directory_path = filedialog.askdirectory(title="Select Music Folder")
+            directory_path = filedialog.askdirectory(
+                title="Select Music Folder")
             if directory_path == "":
                 raise ValueError("No folder selected")
             for file_name in os.listdir(directory_path):
@@ -296,8 +302,8 @@ class MusicPlayer:
             for song in self.song_library:
                 self.playlist_listbox.insert("end", os.path.basename(song))
         except ValueError as e:
-            messagebox.showerror("No folder selected" , "Please select a folder to add songs")
-
+            messagebox.showerror("No folder selected",
+                                 "Please select a folder to add songs")
 
     # Get the album art from the song
     # Need to call this function before playing the songs with current index of that song
@@ -331,15 +337,18 @@ class MusicPlayer:
             self.play(song_data)
             self.get_album_art(song_data)
         except IndexError:
-            messagebox.showerror("No song selected", "Please select a song to play")
+            messagebox.showerror("No song selected",
+                                 "Please select a song to play")
 
 
 # Stop the music
+
 
     def stop(self):
         pygame.mixer.music.stop()
         self.playing = False
         self.progress_bar.stop()
+        self.song_name_label.grid_remove()  # Hide the song name label
 
     # Play the music
 
@@ -358,6 +367,9 @@ class MusicPlayer:
                 self.stop()
                 song_data = self.song_library[self.current_song_index]
                 pygame.mixer.music.load(song_data)
+                song_name = os.path.basename(song_data)
+                self.song_name_label.configure(text=song_name)
+                self.song_name_label.grid()
                 song = pygame.mixer.Sound(song_data)
                 length = song.get_length()
                 minutes = int(length // 60)
@@ -370,9 +382,10 @@ class MusicPlayer:
                 self.update_progress_bar()
                 pygame.mixer.music.set_endevent(pygame.USEREVENT)
                 threading.Thread(target=self.wait_for_song_end,
-                                args=(song_data,)).start()
+                                 args=(song_data,)).start()
         except IndexError:
-            messagebox.showerror("No song selected", "Please select a song to play")
+            messagebox.showerror("No song selected",
+                                 "Please select a song to play")
 
     def wait_for_song_end(self, song_data):
         self.offset_time = 0
@@ -405,6 +418,7 @@ class MusicPlayer:
         except ValueError:
             messagebox.showerror("No song selected", "No Song in Playlist")
     # Go back to the previous song
+
     def backward(self):
         try:
             self.stop()
@@ -496,7 +510,5 @@ if __name__ == "__main__":
     pygame.quit()
 
 
-
 # @ TODO 1: Add the URL box for the S3 and Google Drive
 # @ TODO 7: Add the song name to the player
-
