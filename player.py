@@ -1,4 +1,5 @@
 import os
+import sys
 import pygame
 from tkinter import Tk, Label, Button, Listbox, filedialog, PhotoImage, ttk, Entry, Scale, StringVar, messagebox
 from ttkthemes import ThemedTk
@@ -39,11 +40,10 @@ class MusicPlayer:
         self.style.theme_use('ubuntu')
 
         # Load the default album art
-        img = Image.open("default_album_art.png")
+        img = Image.open(self.resource_path("default_album_art.png"))
         img = img.resize((100, 100))
         self.album_art = ImageTk.PhotoImage(img)
 
-        # self.album_art = PhotoImage(file="default_album_art.png")
         self.album_art_label = ttk.Label(master, image=self.album_art)
         self.album_art_label.grid(row=2, column=0, padx=0, pady=0)
 
@@ -70,7 +70,8 @@ class MusicPlayer:
         self.label = Label(master, text="Music Player", font=("Segoe UI", 16))
         self.label.grid(row=1, column=0, padx=10, pady=10)
 
-        self.or_label = Label(master, text="or Stream it", font=("Segoe UI", 12))
+        self.or_label = Label(master, text="or Stream it",
+                              font=("Segoe UI", 12))
         self.or_label.grid(row=4, column=1, padx=10, pady=10)
         # Create the Entry widget
         self.url_entry = ttk.Entry(master, width=20)
@@ -103,43 +104,45 @@ class MusicPlayer:
         resize_factor = 0.5
         # Load the icons
 
-        self.shuffle_icon = PhotoImage(file="shuffle.png")
+        self.shuffle_icon = PhotoImage(file=self.resource_path("shuffle.png"))
         self.shuffle_icon = self.shuffle_icon.subsample(
             int(resize_factor * 100))
         self.shuffle_button = ttk.Button(
             button_frame, image=self.shuffle_icon, command=self.shuffle_songs)
         self.shuffle_button.grid(row=0, column=0, padx=5)
 
-        self.repeat_icon = PhotoImage(file="repeat.png")
+        self.repeat_icon = PhotoImage(file=self.resource_path("repeat.png"))
         self.repeat_icon = self.repeat_icon.subsample(int(resize_factor * 60))
-        self.repeat_once_icon = PhotoImage(file="repeat_once.png")
+        self.repeat_once_icon = PhotoImage(
+            file=self.resource_path("repeat_once.png"))
         self.repeat_once_icon = self.repeat_once_icon.subsample(
             int(resize_factor * 60))
         self.repeat_button = ttk.Button(
             button_frame, image=self.repeat_icon, command=self.toggle_repeat)
         self.repeat_button.grid(row=0, column=5, padx=5)
 
-        self.play_icon = PhotoImage(file="play.png")
+        self.play_icon = PhotoImage(file=self.resource_path("play.png"))
         self.play_icon = self.play_icon.subsample(int(resize_factor * 100))
         self.play_button = ttk.Button(
             button_frame, image=self.play_icon, command=self.play)
         self.play_button.grid(row=0, column=3, padx=5)
 
-        self.pause_icon = PhotoImage(file="pause.png")
+        self.pause_icon = PhotoImage(file=self.resource_path("pause.png"))
         self.pause_icon = self.pause_icon.subsample(int(resize_factor * 100))
         self.pause_button = ttk.Button(
             button_frame, image=self.pause_icon, command=self.pause)
         self.pause_button.grid(row=0, column=2, padx=5)
         self.pause_button.grid_remove()  # Hide the pause button by default
 
-        self.forward_icon = PhotoImage(file="forward.png")
+        self.forward_icon = PhotoImage(file=self.resource_path("forward.png"))
         self.forward_icon = self.forward_icon.subsample(
             int(resize_factor * 100))
         self.forward_button = ttk.Button(
             button_frame, image=self.forward_icon, command=self.forward)
         self.forward_button.grid(row=0, column=4, padx=5)
 
-        self.backward_icon = PhotoImage(file="backward.png")
+        self.backward_icon = PhotoImage(
+            file=self.resource_path("backward.png"))
         self.backward_icon = self.backward_icon.subsample(
             int(resize_factor * 100))
         self.backward_button = ttk.Button(
@@ -156,9 +159,9 @@ class MusicPlayer:
         self.current_time_label = Label(button_frame2)
         self.current_time_label.grid(row=0, column=0, padx=(10, 0))
 
-        self.mute_icon = PhotoImage(file="mute.png")
+        self.mute_icon = PhotoImage(file=self.resource_path("mute.png"))
         self.mute_icon = self.mute_icon.subsample(int(resize_factor * 60))
-        self.unmute_icon = PhotoImage(file="unmute.png")
+        self.unmute_icon = PhotoImage(file=self.resource_path("unmute.png"))
         self.unmute_icon = self.unmute_icon.subsample(int(resize_factor * 60))
         self.mute_button = Button(
             button_frame, image=self.unmute_icon, command=self.toggle_mute)
@@ -174,7 +177,15 @@ class MusicPlayer:
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
+    @staticmethod
+    def resource_path(relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+            os.path.abspath(__file__)))
+        return os.path.join(base_path, relative_path)
+
     # Volume slider working upon
+
     def set_volume(self, volume):
         pygame.mixer.init()
         self.volume = int(volume)
@@ -244,11 +255,12 @@ class MusicPlayer:
                 if response.status_code == 200:
                     file_path = urlparse(url).path
                     basename = os.path.basename(file_path)
-                    
+
                     temp_dir = tempfile.gettempdir()
                     temp_file_path = os.path.join(temp_dir, basename)
 
-                    with open(temp_file_path, 'wb') as temp_file: #.NamedTemporaryFile(delete=False, suffix=basename) as temp_file:
+                    # .NamedTemporaryFile(delete=False, suffix=basename) as temp_file:
+                    with open(temp_file_path, 'wb') as temp_file:
 
                         for chunk in response.iter_content(chunk_size=1024):
                             if chunk:
@@ -258,7 +270,6 @@ class MusicPlayer:
                     self.song_library.append(temp_file_path)
                     self.url_entry.delete(0, "end")
 
-
                     self.playlist_listbox.insert(
                         "end", basename)
                     self.search_box.grid_remove()
@@ -266,8 +277,8 @@ class MusicPlayer:
             messagebox.showerror("Invalid URL", "Please enter a valid URL")
             print(e)
 
-
     # Add songs to the library
+
     def add_to_library(self):
         try:
             # from local directory
@@ -336,7 +347,6 @@ class MusicPlayer:
 
 
 # Stop the music
-
 
     def stop(self):
         pygame.mixer.music.stop()
@@ -467,7 +477,6 @@ class MusicPlayer:
             self.offset_time = new_time
             self.progress_bar["value"] = self.user_set_time
             print("this is new time: " + str(new_time / 1000))
-
 
     def shuffle_songs(self):
         shuffle(self.song_library)
