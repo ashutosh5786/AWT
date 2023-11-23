@@ -26,5 +26,6 @@ pip install pygame tkinter eyed3 requests
 ```
 
 ## Run
+
 Added the binary to run it directly just plug and play.
-<br> Binary can be found under dist folder with name of player.exe
+<br> Binary can be found under dist folder with name of player.exe or just download it [here](https://github.com/ashutosh5786/Music_Player/releases/tag/First_Release)
