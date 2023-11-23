@@ -19,12 +19,10 @@ To run the Music Player, you will need Python and the following Python libraries
 To install these libraries, you can use pip:
 
 ```bash
-pip install pygame tkinter
+pip install pygame tkinter eyed3 requests
 
 ```
 
 ## Run
 Added the binary to run it directly just plug and play.
 <br> Binary can be found under dist folder with name of player.exe
-
-
