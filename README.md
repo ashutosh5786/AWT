@@ -15,6 +15,8 @@ To run the Music Player, you will need Python and the following Python libraries
 
 - pygame
 - tkinter
+- eyed3
+- requests
 
 To install these libraries, you can use pip:
 
