@@ -1,12 +1,30 @@
 # Music Player
 
-As the name suggest it a music player written in python using pygame tkinter 
-<br> for the individual project for Advaced Web Technologies
+Music Player is a simple and intuitive application for playing music files. It's written in Python using the Pygame and Tkinter libraries.
 
+## Features
+
+- Play, pause, and stop music
+- Shuffle and repeat functionality
+- Display album art
+- Support for .mp3 and .wav files
+
+## Installation
+
+To run the Music Player, you will need Python and the following Python libraries installed:
+
+- pygame
+- tkinter
+
+To install these libraries, you can use pip:
+
+```bash
+pip install pygame tkinter
+
+```
 
 ## Run
 Added the binary to run it directly just plug and play.
 <br> Binary can be found under dist folder with name of player.exe
 
 
-@TODO README
